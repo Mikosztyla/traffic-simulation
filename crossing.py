@@ -125,9 +125,9 @@ class Crossing:
 
         for side in self.sides.values():
             for lane in side["out"]:
-                lane.draw(screen, self.lane_width)
+                lane.draw(screen)
             for lane in side["in"]:
-                lane.draw(screen, self.lane_width)
+                lane.draw(screen)
 
     def __init__(self, center: pygame.Vector2, lanes_per_side: int, lane_width=40, road_length=200):
         self.center = center

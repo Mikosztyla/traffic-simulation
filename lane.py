@@ -1,12 +1,44 @@
 import pygame
+from constants import LANE_WIDTH
+from car import Car
 
 
 class Lane:
-    def __init__(self, start: pygame.Vector2, end: pygame.Vector2):
+    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, speed_limit, lane_width=LANE_WIDTH):
         self.start = start
         self.end = end
+        self.lane_width = lane_width
+        self.speed_limit = speed_limit
+        # TODO na razie robię byle jak na liście, na pewno da się lepiej (może heap?)
+        # car[0] ----road----> car[n]
+        self.cars = []  
 
-    def draw(self, screen, lane_width):
+    def add_car(self, car: Car):
+        pass
+        # TODO
+
+    def spawn_car(self, max_acc, max_speed_car):
+        car = Car(self, max_speed_car)
+        self.cars.insert(0, car)
+        return car
+
+    def delete_car(self, car: Car):
+        self.cars.remove(car)
+
+    def update_cars(self, dt):
+        cars_finished = []
+        for i, car in enumerate(self.cars):
+            if i == len(self.cars) - 1:
+                following_car = None
+            else:
+                following_car = self.cars[i + 1]
+            finished = car.update(following_car, dt)
+            if finished: cars_finished.append(car)
+
+        for car in cars_finished:
+            self.cars.remove(car)
+
+    def draw(self, screen):
         direction = (self.end - self.start)
         length = direction.length()
 
@@ -16,7 +48,7 @@ class Lane:
         direction = direction.normalize()
         normal = pygame.Vector2(-direction.y, direction.x)
 
-        half_width = lane_width / 2
+        half_width = self.lane_width / 2
         edge_thickness = 3
 
         # --- Road surface polygon ---
