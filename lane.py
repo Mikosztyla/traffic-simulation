@@ -52,7 +52,7 @@ class Lane:
                 car.current_lane = car.current_lane.next_lane
                 car.progress = 0
                 car.current_lane.add_car(car)
-            self.cars.remove(car)
+            self.delete_car(car)
 
     def set_red_light(self, point):
 

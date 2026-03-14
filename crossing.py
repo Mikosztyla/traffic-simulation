@@ -79,9 +79,8 @@ class Crossing:
 
     def add_connector(self, lane, end_lane):
         connector = Lane(lane.end, end_lane.start, None, lane.speed_limit)
-        connector.is_connector = True
-        lane.next_lane = connector
         connector.next_lane = end_lane
+        lane.next_lane = connector
         self.connectors.append(lane)
 
     def get_random_out_lane_and_desired_in_lane(self, lane):
