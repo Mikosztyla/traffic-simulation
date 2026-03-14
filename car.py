@@ -31,7 +31,6 @@ class Car:
         )
 
     def update(self, following_car, right_lane, left_lane, dt):
-        # if self.animate_driving_on_crossing(dt): return False
         lane_vector = self.current_lane.end - self.current_lane.start
         lane_length = lane_vector.length()
 
@@ -72,28 +71,6 @@ class Car:
                     self.do_lane_change(left_lane)
                     return True
 
-        return False
-
-    def animate_driving_on_crossing(self, dt):
-        if self.in_crossing:
-            direction = self.crossing_target - self.position
-            dist = direction.length()
-
-            if dist < 1:
-                self.progress = 1
-                return True
-
-            direction = direction.normalize()
-
-            move = self.speed * dt * PIXELS_PER_METER
-
-            if move >= dist:
-                self.position = self.crossing_target
-                self.progress = 1
-            else:
-                self.position += direction * move
-
-            return True
         return False
 
     def get_gap(self, following_car):
