@@ -43,8 +43,8 @@ MIN_SPAWN_INTERVAL = 0.5
 spawn_interval = MIN_SPAWN_INTERVAL
 
 
-road = Road(pygame.Vector2(WIDTH // 2, -CAR_LENGTH), pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), Side.N, 14, 2)
-road = Road(pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), pygame.Vector2(WIDTH // 2, -CAR_LENGTH), Side.S, 14, 2)
+# road = Road(pygame.Vector2(WIDTH // 2, -CAR_LENGTH), pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), Side.S, 14, 2)
+road = Road(pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), pygame.Vector2(WIDTH // 2, -CAR_LENGTH), Side.N, 14, 2)
 
 while running:
     dt = clock.tick(60) / 1000

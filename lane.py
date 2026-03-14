@@ -4,18 +4,26 @@ from car import Car
 
 
 class Lane:
-    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, speed_limit, lane_width=LANE_WIDTH):
+    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit, lane_width=LANE_WIDTH):
         self.start = start
         self.end = end
         self.lane_width = lane_width
         self.speed_limit = speed_limit
+        self.road = road
         # TODO na razie robię byle jak na liście, na pewno da się lepiej (może heap?)
         # car[0] ----road----> car[n]
         self.cars = []  
 
-    def add_car(self, car: Car):
-        pass
-        # TODO
+    def add_car(self, new_car: Car):
+        insert_index = 0
+        for i, car in enumerate(self.cars):
+            if car.progress > new_car.progress:
+                insert_index = i
+                break
+        else:
+            insert_index = len(self.cars)
+
+        self.cars.insert(insert_index, new_car)
 
     def spawn_car(self, max_acc, max_speed_car):
         car = Car(self, max_speed_car)
@@ -25,14 +33,14 @@ class Lane:
     def delete_car(self, car: Car):
         self.cars.remove(car)
 
-    def update_cars(self, dt):
+    def update_cars(self, dt, right_lane, left_lane):
         cars_finished = []
         for i, car in enumerate(self.cars):
             if i == len(self.cars) - 1:
                 following_car = None
             else:
                 following_car = self.cars[i + 1]
-            finished = car.update(following_car, dt)
+            finished = car.update(following_car, right_lane, left_lane, dt)
             if finished: cars_finished.append(car)
 
         for car in cars_finished:

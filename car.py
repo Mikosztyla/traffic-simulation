@@ -1,6 +1,7 @@
 import pygame
-from constants import CAR_LENGTH, PIXELS_PER_METER
+from constants import CAR_LENGTH, PIXELS_PER_METER, LANE_CHANGE_COOLDOWN
 from idm_model import IDM
+from mobil_model import MOBIL
 
 
 class Car:
@@ -10,16 +11,25 @@ class Car:
         self.progress = 0.0  # 0 = start, 1 = end
         self.length = CAR_LENGTH
         self.position = lane.start.copy()
+        self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
         
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
             time_headway=0.5,
             min_gap=1,
-            acc=2.5,
+            acc=1.5,
             dcc=3
         )
 
-    def update(self, following_car, dt):
+        self.mobil = MOBIL(
+            politeness=0.4,
+            save_dcc=3,
+            acc_thr=0.4,
+            bias=0.5
+        )
+
+
+    def update(self, following_car, right_lane, left_lane, dt):
         lane_vector = self.current_lane.end - self.current_lane.start
         lane_length = lane_vector.length()
 
@@ -43,7 +53,21 @@ class Car:
             self.progress
         )
 
+        self.last_lane_change += dt
+        if self.last_lane_change < LANE_CHANGE_COOLDOWN:
+            return False
+        
+        if right_lane:
+            if self.consider_lane_change(right_lane, to_right=True):
+                self.do_lane_change(right_lane)
+                return True
+        if left_lane:
+            if self.consider_lane_change(left_lane, to_right=False):
+                self.do_lane_change(left_lane)
+                return True
+
         return False
+    
     
     def get_gap(self, following_car):
         if following_car is None:
@@ -53,6 +77,50 @@ class Car:
         gap = (center_distance - (self.length / 2) - (following_car.length / 2)) / PIXELS_PER_METER
 
         return max(gap, 0.1)
+    
+    def _get_neighbour_cars(self, target_lane):
+        for i, car in enumerate(target_lane.cars):
+            if car.progress > self.progress: 
+                lead_car = car
+                lag_car = target_lane.cars[i - 1] if i - 1 >= 0 else None
+                break
+        else:
+            lead_car = None
+            lag_car = target_lane.cars[-1] if target_lane.cars else None
+
+        return lead_car, lag_car
+        
+    def consider_lane_change(self, target_lane, to_right):
+        lead_car, lag_car = self._get_neighbour_cars(target_lane)
+        if lead_car is not None and lead_car.last_lane_change == 0: # lead_car is changing lane
+            return False
+
+        new_acc = self.idm.get_acc(
+            self.speed,
+            lead_car.speed if lead_car else self.speed,
+            self.get_gap(lead_car)
+        )
+
+        new_lag_acc = 0
+        if lag_car:
+            new_lag_acc = lag_car.idm.get_acc(
+                lag_car.speed,
+                self.speed,
+                lag_car.get_gap(self)
+            )
+
+        return self.mobil.consider_line_change(self.acc, new_acc, new_lag_acc, to_right)
+    
+    def do_lane_change(self, target_lane):
+        target_lane.add_car(self)
+        self.current_lane = target_lane
+
+        self.position = self.current_lane.start.lerp(
+            self.current_lane.end,
+            self.progress
+        )
+        self.last_lane_change = 0
+
 
     def draw(self, screen, car_image):
         # compute lane direction vector
