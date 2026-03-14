@@ -6,7 +6,8 @@ from car import Car
 from lane import Lane
 from road import Road
 from random import random
-from constants import CAR_LENGTH
+from constants import *
+from traffic_light import TrafficLight
 
 pygame.init()
 
@@ -42,17 +43,25 @@ MIN_SPAWN_INTERVAL = 0.5
 
 spawn_interval = MIN_SPAWN_INTERVAL
 
-
 # road = Road(pygame.Vector2(WIDTH // 2, -CAR_LENGTH), pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), Side.S, 14, 2)
 road = Road(pygame.Vector2(WIDTH // 2, HEIGHT + CAR_LENGTH), pygame.Vector2(WIDTH // 2, -CAR_LENGTH), Side.N, 14, 2)
+traffic_lights = [
+    TrafficLight(road.lanes[0], (WIDTH // 2 + 60, HEIGHT // 2 - 100), (TRAFFIC_LIGHT_WIDTH, TRAFFIC_LIGHT_HEIGHT)),
+    TrafficLight(road.lanes[1], (WIDTH // 2 - 100, HEIGHT // 2 - 100), (TRAFFIC_LIGHT_WIDTH, TRAFFIC_LIGHT_HEIGHT))]
 
 while running:
     dt = clock.tick(60) / 1000
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for traffic_light in traffic_lights:
+                traffic_light.handle_click(event.pos)
     fill_background(screen)
     road.draw(screen)
+    for traffic_light in traffic_lights:
+        traffic_light.update(dt)
     
     spawn_timer += dt
     if spawn_timer >= spawn_interval:
@@ -68,6 +77,8 @@ while running:
 
     for car in cars:
         car.draw(screen, car_image)
+    for traffic_light in traffic_lights:
+        traffic_light.draw(screen)
     pygame.display.flip()
 
 pygame.quit()

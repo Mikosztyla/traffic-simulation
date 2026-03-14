@@ -1,6 +1,7 @@
 import pygame
-from constants import LANE_WIDTH
+from constants import *
 from car import Car
+from stop_car import StopCar
 
 
 class Lane:
@@ -12,7 +13,8 @@ class Lane:
         self.road = road
         # TODO na razie robię byle jak na liście, na pewno da się lepiej (może heap?)
         # car[0] ----road----> car[n]
-        self.cars = []  
+        self.stop_car = None
+        self.cars = []
 
     def add_car(self, new_car: Car):
         insert_index = 0
@@ -45,6 +47,42 @@ class Lane:
 
         for car in cars_finished:
             self.cars.remove(car)
+
+    def set_red_light(self, point):
+
+        if self.stop_car is not None:
+            return
+
+        stop_car = StopCar(self, self.get_progress_on_lane(point))
+
+        self.stop_car = stop_car
+        self.add_car(stop_car)
+
+    def set_green_light(self):
+
+        if self.stop_car is None:
+            return
+
+        if self.stop_car in self.cars:
+            self.cars.remove(self.stop_car)
+
+        self.stop_car = None
+
+    def get_progress_on_lane(self, point):
+        lane_vec = self.end - self.start
+        point_vec = point - self.start
+
+        lane_length = lane_vec.length()
+        if lane_length == 0:
+            return 0
+
+        progress = point_vec.dot(lane_vec) / (lane_length * lane_length)
+        offset_pixels = STOP_OFFSET_METERS * PIXELS_PER_METER
+        progress -= offset_pixels / lane_length
+        if progress > 1:
+            progress = 1
+
+        return max(0, progress)
 
     def draw(self, screen):
         direction = (self.end - self.start)

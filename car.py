@@ -1,5 +1,5 @@
 import pygame
-from constants import CAR_LENGTH, PIXELS_PER_METER, LANE_CHANGE_COOLDOWN
+from constants import *
 from idm_model import IDM
 from mobil_model import MOBIL
 
@@ -54,7 +54,7 @@ class Car:
         )
 
         self.last_lane_change += dt
-        if self.last_lane_change < LANE_CHANGE_COOLDOWN:
+        if self.last_lane_change < LANE_CHANGE_COOLDOWN or self.speed < LANE_CHANGE_SPEED_THRESHOLD:
             return False
         
         if right_lane:
