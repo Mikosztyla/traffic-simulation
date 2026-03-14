@@ -45,6 +45,11 @@ class Road:
     def add_car(self, car: Car, lane_id):
         self.lanes[lane_id].add_car(car)
 
+    def spawn_new_car(self, max_acc, max_speed=None):
+        if not max_speed: max_speed = self.speed_limit
+        lane = choice(self.lanes)
+        return lane.spawn_car(max_acc, max_speed)
+
     def update_cars(self, dt):
         for i, lane in enumerate(self.lanes):
             right_lane = self.lanes[i - 1] if i > 0 else None

@@ -95,20 +95,17 @@ while running:
 
     spawn_timer += dt
     if spawn_timer >= spawn_interval:
+        speed = random() * 10
+        if random() > 0.8:
+            speed = 14
         road = choice(roads_in)
-        lane = choice(road.lanes)
-        speed = ROAD_SPEED_LIMIT if random() > 0.8 else random() * 10
-        cars.append(lane.spawn_car(10, speed))
+        cars.append(road.spawn_new_car(10, speed))
         spawn_timer = 0
         spawn_interval = random() * (MAX_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) + MIN_SPAWN_INTERVAL
 
     for road in all_roads:
-        for i, lane in enumerate(road.lanes):
-            right_lane = road.lanes[i - 1] if i > 0 else None
-            left_lane = road.lanes[i + 1] if i + 1 < len(road.lanes) else None
-            lane.update_cars(dt, right_lane, left_lane)
-    crossing.update_cars(dt)
-    # Draw cars
+        road.update_cars(dt)
+
     for car in cars:
         car.draw(screen, car_image)
     crossing.draw_connectors(screen)
