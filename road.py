@@ -4,12 +4,13 @@ from constants import LANE_WIDTH
 from side import Side
 from car import Car
 from random import choice
+from constants import *
 
 # direction - w którą stronę wskazuje wektor
 # przyjmuję że najbardziej prawy pas to lanes[0]
 
 class Road:
-    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, direction: Side, speed_limit=50, number_of_lanes=1):
+    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, direction: Side, speed_limit=ROAD_SPEED_LIMIT, number_of_lanes=LANES_PER_SIDE):
         self.start = start
         self.end = end
         self.number_of_lanes = number_of_lanes
@@ -17,6 +18,10 @@ class Road:
         self.direction = direction
         self.speed_limit = speed_limit
         self._create_lanes()
+        self.crossing = None
+
+    def set_crossing(self, crossing):
+        self.crossing = crossing
 
     def _create_lanes(self):
         if self.start.x == self.end.x: # vertical (N-S)
@@ -40,18 +45,12 @@ class Road:
     def add_car(self, car: Car, lane_id):
         self.lanes[lane_id].add_car(car)
 
-    def spawn_new_car(self, max_acc, max_speed=None):
-        if not max_speed: max_speed = self.speed_limit
-        lane = choice(self.lanes)
-        return lane.spawn_car(max_acc, max_speed)
-    
     def update_cars(self, dt):
         for i, lane in enumerate(self.lanes):
             right_lane = self.lanes[i - 1] if i > 0 else None
             left_lane = self.lanes[i + 1] if i + 1 < self.number_of_lanes else None
             lane.update_cars(dt, right_lane, left_lane)
 
-    
     def draw(self, screen):
         for lane in self.lanes:
             lane.draw(screen)

@@ -15,6 +15,7 @@ class Lane:
         # car[0] ----road----> car[n]
         self.stop_car = None
         self.cars = []
+        self.next_lane = None
 
     def add_car(self, new_car: Car):
         insert_index = 0
@@ -28,7 +29,8 @@ class Lane:
         self.cars.insert(insert_index, new_car)
 
     def spawn_car(self, max_acc, max_speed_car):
-        car = Car(self, max_speed_car)
+        lane = self.road.crossing.get_random_out_lane_and_desired_in_lane(self)
+        car = Car(self, max_speed_car, self.road.lanes.index(lane))
         self.cars.insert(0, car)
         return car
 
@@ -46,6 +48,10 @@ class Lane:
             if finished: cars_finished.append(car)
 
         for car in cars_finished:
+            if car.current_lane.next_lane is not None:
+                car.current_lane = car.current_lane.next_lane
+                car.progress = 0
+                car.current_lane.add_car(car)
             self.cars.remove(car)
 
     def set_red_light(self, point):

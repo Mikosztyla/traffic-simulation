@@ -5,14 +5,16 @@ from mobil_model import MOBIL
 
 
 class Car:
-    def __init__(self, lane, speed):
+    def __init__(self, lane, speed, target_in_lane_index):
         self.current_lane = lane
         self.speed = speed
         self.progress = 0.0  # 0 = start, 1 = end
         self.length = CAR_LENGTH
         self.position = lane.start.copy()
         self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
-        
+        self.in_crossing = False
+        self.crossing_target = None
+        self.target_in_lane_index = target_in_lane_index
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
             time_headway=0.5,
@@ -28,8 +30,8 @@ class Car:
             bias=0.5
         )
 
-
     def update(self, following_car, right_lane, left_lane, dt):
+        # if self.animate_driving_on_crossing(dt): return False
         lane_vector = self.current_lane.end - self.current_lane.start
         lane_length = lane_vector.length()
 
@@ -56,19 +58,44 @@ class Car:
         self.last_lane_change += dt
         if self.last_lane_change < LANE_CHANGE_COOLDOWN or self.speed < LANE_CHANGE_SPEED_THRESHOLD:
             return False
-        
-        if right_lane:
-            if self.consider_lane_change(right_lane, to_right=True):
-                self.do_lane_change(right_lane)
-                return True
-        if left_lane:
-            if self.consider_lane_change(left_lane, to_right=False):
-                self.do_lane_change(left_lane)
-                return True
+
+        distance_to_crossing = (1 - self.progress) * lane_length / PIXELS_PER_METER
+        if distance_to_crossing < 60:
+            if right_lane:
+                if self.consider_lane_change(right_lane, to_right=True):
+                    print("changing")
+                    self.do_lane_change(right_lane)
+                    return True
+            if left_lane:
+                if self.consider_lane_change(left_lane, to_right=False):
+                    print("changing")
+                    self.do_lane_change(left_lane)
+                    return True
 
         return False
-    
-    
+
+    def animate_driving_on_crossing(self, dt):
+        if self.in_crossing:
+            direction = self.crossing_target - self.position
+            dist = direction.length()
+
+            if dist < 1:
+                self.progress = 1
+                return True
+
+            direction = direction.normalize()
+
+            move = self.speed * dt * PIXELS_PER_METER
+
+            if move >= dist:
+                self.position = self.crossing_target
+                self.progress = 1
+            else:
+                self.position += direction * move
+
+            return True
+        return False
+
     def get_gap(self, following_car):
         if following_car is None:
             return float("inf")
@@ -89,8 +116,13 @@ class Car:
             lag_car = target_lane.cars[-1] if target_lane.cars else None
 
         return lead_car, lag_car
-        
+
     def consider_lane_change(self, target_lane, to_right):
+        current_index = self.current_lane.road.lanes.index(self.current_lane)
+        if to_right and current_index <= self.target_in_lane_index:
+            return False
+        if not to_right and current_index >= self.target_in_lane_index:
+            return False
         lead_car, lag_car = self._get_neighbour_cars(target_lane)
         if lead_car is not None and lead_car.last_lane_change == 0: # lead_car is changing lane
             return False
