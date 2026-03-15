@@ -56,11 +56,11 @@ class Car:
         self.last_lane_change += dt
         if self.last_lane_change < LANE_CHANGE_COOLDOWN or \
             self.speed < LANE_CHANGE_SPEED_THRESHOLD or \
-            self.progress * lane_length < LANE_CHANGE_COOLDOWN_METERS:
+            self.progress * lane_length < LANE_CHANGE_COOLDOWN_PIXELS:
             return False
 
-        distance_to_crossing = (1 - self.progress) * lane_length / PIXELS_PER_METER
-        if distance_to_crossing < 60:
+        distance_to_crossing = (1 - self.progress) * lane_length
+        if distance_to_crossing > LANE_CHANGE_COOLDOWN_PIXELS:
             if right_lane:
                 if self.consider_lane_change(right_lane, to_right=True):
                     self.do_lane_change(right_lane)
@@ -73,21 +73,20 @@ class Car:
         return False
     
     def _update_acc(self, following_car):
-        gap = self.get_gap(following_car)
-        following_car_speed = self.speed
-        if following_car:
-            following_car_speed = following_car.speed
-        else:
-            # if first in lane and next lane exists, check the last car on next lane
+        if not following_car:
+            # if first in lane and next lane exists, check the last car in next lane
             next_lane = self.current_lane.get_next_lane(self.direction)
             if next_lane:
                 if next_lane.cars:
-                    following_car_speed = next_lane.cars[0].speed
+                    following_car = next_lane.cars[0]
                 # as a connector can be quite short, check also next road
                 else:
                     next_next_line = next_lane.get_next_lane(Direction.STRAIGHT)
                     if next_next_line and next_next_line.cars:
-                        following_car_speed = next_next_line.cars[0].speed
+                        following_car = next_next_line.cars[0]
+
+        gap = self.get_gap(following_car)
+        following_car_speed = following_car.speed if following_car else self.speed
             
         self.acc = self.idm.get_acc(self.speed, following_car_speed, gap)
 
