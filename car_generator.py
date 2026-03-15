@@ -7,7 +7,12 @@ from direction import Direction
 
 # TODO: lepsze losowanie kierunku jazdy przy spawnowaniu auta
 def get_random_direction():
-    return random.choice(list(Direction))
+    if RIGHT_PROBABILITY + LEFT_PROBABILITY > 1:
+        raise ValueError(f"Sum of left and right turn probabilities grater then 0 ({LEFT_PROBABILITY} + {RIGHT_PROBABILITY} = {LEFT_PROBABILITY + RIGHT_PROBABILITY})")
+    
+    possible_directions = [Direction.LEFT, Direction.STRAIGHT, Direction.RIGHT]
+    weights = [LEFT_PROBABILITY, 1 - (LEFT_PROBABILITY + RIGHT_PROBABILITY), RIGHT_PROBABILITY]
+    return random.choices(possible_directions, weights=weights, k=1)[0]
 
 
 class CarGenerator:
