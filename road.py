@@ -53,6 +53,6 @@ class Road:
             left_lane = self.lanes[i + 1] if i + 1 < self.number_of_lanes else None
             lane.update_cars(dt, right_lane, left_lane)
     
-    def draw(self, screen, car_image):
+    def draw(self, screen):
         for lane in self.lanes:
-            lane.draw(screen, car_image)
+            lane.draw(screen)

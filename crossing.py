@@ -27,6 +27,23 @@ class Crossing:
 
         self.connectors = []
         self._generate_connectors()
+        lanes = []
+
+        for road in self.in_roads.values():
+            lanes.extend(road.lanes)
+
+        xs = [lane.end.x for lane in lanes]
+        ys = [lane.end.y for lane in lanes]
+
+        min_x, max_x = min(xs), max(xs)
+        min_y, max_y = min(ys), max(ys)
+
+        self.rect = pygame.Rect(
+            min_x,
+            min_y,
+            max_x - min_x,
+            max_y - min_y
+        )
 
     def _generate_connectors(self):
 
@@ -78,10 +95,13 @@ class Crossing:
         in_lane.add_next_lane(connector, direction)
         self.connectors.append(connector)
 
-    def update(self, screen, car_image, dt):
+    def update(self, screen, dt):
         for connector in self.connectors:
             connector.update_cars(dt, None, None)
-            connector.draw(screen, car_image)
+            connector.draw(screen)
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, (50, 50, 50), self.rect)
 
     def draw_connectors(self, screen):
         color = (0, 200, 255)

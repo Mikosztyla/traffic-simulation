@@ -2,6 +2,7 @@ import random
 from constants import *
 from car import Car
 from direction import Direction
+import pygame
 
 # inflow - [cars/s]
 
@@ -20,6 +21,18 @@ class CarGenerator:
         self.inflow = inflow
         self.time_since_last = 0
         self.next_spawn_time = self._get_next_spawn_time()
+        self.total_spawned = 0
+        car_img_right = pygame.image.load("media/zygzak_blue.png").convert_alpha()
+        car_img_straight = pygame.image.load("media/zygzak.png").convert_alpha()
+        car_img_left = pygame.image.load("media/zygzak_green.png").convert_alpha()
+        car_img_right = pygame.transform.scale(car_img_right, (40, CAR_LENGTH))
+        car_img_straight = pygame.transform.scale(car_img_straight, (40, CAR_LENGTH))
+        car_img_left = pygame.transform.scale(car_img_left, (40, CAR_LENGTH))
+        self.car_images = {
+            Direction.RIGHT: car_img_right,
+            Direction.STRAIGHT: car_img_straight,
+            Direction.LEFT: car_img_left
+        }
 
     def _get_next_spawn_time(self):
         return min(MAX_SPAWN_TIME, random.expovariate(self.inflow), MAX_SPAWN_TIME)
@@ -42,5 +55,7 @@ class CarGenerator:
             return
         
         spawn_lane = random.choice(available_lanes)
-        car = Car(spawn_lane, random.random() * 10, get_random_direction())
+        direction = get_random_direction()
+        car = Car(spawn_lane, random.random() * 10, direction, self.car_images[direction])
+        self.total_spawned += 1
         spawn_lane.add_car(car)

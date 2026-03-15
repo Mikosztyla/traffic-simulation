@@ -72,6 +72,12 @@ class TrafficLight:
             if self.timer >= TRAFFIC_YELLOW_TIME:
                 self.turn_on_red()
 
+    def is_green(self):
+        return self.state == "green"
+
+    def is_red(self):
+        return self.state == "red"
+
     def handle_click(self, mouse_pos):
         if self.sequence is not None:
             return

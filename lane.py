@@ -5,6 +5,22 @@ from stop_car import StopCar
 from direction import Direction
 
 
+def draw_dashed_line(screen, color, start, end, dash_length=20, gap_length=10, width=3):
+    direction = end - start
+    length = direction.length()
+
+    if length == 0:
+        return
+
+    direction = direction.normalize()
+    step = dash_length + gap_length
+
+    for i in range(0, int(length), step):
+        dash_start = start + direction * i
+        dash_end = start + direction * min(i + dash_length, length)
+        pygame.draw.line(screen, color, dash_start, dash_end, width)
+
+
 class Lane:
     def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit, lane_width=LANE_WIDTH):
         self.start = start
@@ -102,11 +118,11 @@ class Lane:
         elif direction == Direction.RIGHT:
             return self.road.lanes.index(self)
     
-    def draw_cars(self, screen, car_image):
+    def draw_cars(self, screen):
         for car in self.cars:
-            car.draw(screen, car_image)
+            car.draw(screen)
 
-    def draw(self, screen, car_image):
+    def draw(self, screen):
         direction = (self.end - self.start)
         length = direction.length()
 
@@ -131,11 +147,26 @@ class Lane:
             # --- Left white edge ---
             left1 = self.start + normal * half_width
             left2 = self.end + normal * half_width
-            pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
 
             # --- Right white edge ---
             right1 = self.start - normal * half_width
             right2 = self.end - normal * half_width
-            pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+            lane_index = self.road.lanes.index(self)
+            lane_count = len(self.road.lanes)
 
-        self.draw_cars(screen, car_image)
+            is_left_edge = lane_index == 0
+            is_right_edge = lane_index == lane_count - 1
+
+            if is_left_edge:
+                pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
+                pass
+            else:
+                draw_dashed_line(screen, (255, 255, 255), left1, left2, width=edge_thickness)
+
+            if is_right_edge:
+                pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+                pass
+            else:
+                draw_dashed_line(screen, (255, 255, 255), right1, right2, width=edge_thickness)
+
+        self.draw_cars(screen)

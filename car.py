@@ -7,7 +7,7 @@ from stop_car import StopCar
 
 
 class Car:
-    def __init__(self, lane, speed, direction: Direction):
+    def __init__(self, lane, speed, direction: Direction, image):
         self.current_lane = lane
         self.speed = speed
         self.progress = 0.0  # 0 = start, 1 = end
@@ -15,6 +15,7 @@ class Car:
         self.position = lane.start.copy()
         self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
         self.direction = direction
+        self.image = image
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
             time_headway=0.5,
@@ -195,7 +196,7 @@ class Car:
         self.last_lane_change = 0
 
 
-    def draw(self, screen, car_image):
+    def draw(self, screen):
         # compute lane direction vector
         direction = self.current_lane.end - self.current_lane.start
         if direction.length() == 0:
@@ -203,7 +204,7 @@ class Car:
         angle = direction.angle_to(pygame.Vector2(0, -1))  # angle between lane and upward vector
 
         # rotate the car image
-        rotated_image = pygame.transform.rotate(car_image, angle)
+        rotated_image = pygame.transform.rotate(self.image, angle)
 
         # get the rect centered at car position
         rect = rotated_image.get_rect(center=self.position)
