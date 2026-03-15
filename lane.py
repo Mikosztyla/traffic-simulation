@@ -16,6 +16,10 @@ class Lane:
         self.stop_car = None
         self.cars = []
         self.next_lane = None
+        self.should_draw_lane = True
+
+    def make_lane_invisible(self):
+        self.should_draw_lane = False
 
     def add_car(self, new_car: Car):
         insert_index = 0
@@ -59,7 +63,7 @@ class Lane:
         if self.stop_car is not None:
             return
 
-        stop_car = StopCar(self, self.get_progress_on_lane(point))
+        stop_car = StopCar(self, self.get_progress_on_lane(point), 0)
 
         self.stop_car = stop_car
         self.add_car(stop_car)
@@ -101,28 +105,29 @@ class Lane:
         if length == 0:
             return
 
-        direction = direction.normalize()
-        normal = pygame.Vector2(-direction.y, direction.x)
+        if self.should_draw_lane:
+            direction = direction.normalize()
+            normal = pygame.Vector2(-direction.y, direction.x)
 
-        half_width = self.lane_width / 2
-        edge_thickness = 3
+            half_width = self.lane_width / 2
+            edge_thickness = 3
 
-        # --- Road surface polygon ---
-        p1 = self.start + normal * half_width
-        p2 = self.start - normal * half_width
-        p3 = self.end - normal * half_width
-        p4 = self.end + normal * half_width
+            # --- Road surface polygon ---
+            p1 = self.start + normal * half_width
+            p2 = self.start - normal * half_width
+            p3 = self.end - normal * half_width
+            p4 = self.end + normal * half_width
 
-        pygame.draw.polygon(screen, (50, 50, 50), [p1, p2, p3, p4])
+            pygame.draw.polygon(screen, (50, 50, 50), [p1, p2, p3, p4])
 
-        # --- Left white edge ---
-        left1 = self.start + normal * half_width
-        left2 = self.end + normal * half_width
-        pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
+            # --- Left white edge ---
+            left1 = self.start + normal * half_width
+            left2 = self.end + normal * half_width
+            pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
 
-        # --- Right white edge ---
-        right1 = self.start - normal * half_width
-        right2 = self.end - normal * half_width
-        pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+            # --- Right white edge ---
+            right1 = self.start - normal * half_width
+            right2 = self.end - normal * half_width
+            pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
 
         self.draw_cars(screen, car_image)

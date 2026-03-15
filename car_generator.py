@@ -6,6 +6,8 @@ from car import Car
 # jaki speed?
 
 # inflow - [cars/s]
+
+
 class CarGenerator:
     def __init__(self, inflow_roads, inflow):
         self.inflow_roads = inflow_roads
@@ -15,7 +17,7 @@ class CarGenerator:
     def update(self, dt):
         self.time_since_last += dt
         real_interval = random.expovariate(self.inflow)
-        print(self.time_since_last, real_interval)
+        # print(self.time_since_last, real_interval)
         if self.time_since_last < real_interval:
             return
         
@@ -28,9 +30,9 @@ class CarGenerator:
         if not available_lanes:
             # print("Cannot place a new car")
             return
-
         spawn_lane = random.choice(available_lanes)
-        car = Car(spawn_lane, random.random() * 10)
+        lane = spawn_lane.road.crossing.get_random_out_lane_and_desired_in_lane(spawn_lane)
+        car = Car(spawn_lane, random.random() * 10, spawn_lane.road.lanes.index(lane))
         spawn_lane.add_car(car)
 
         

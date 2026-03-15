@@ -62,12 +62,10 @@ class Car:
         if distance_to_crossing < 60:
             if right_lane:
                 if self.consider_lane_change(right_lane, to_right=True):
-                    print("changing")
                     self.do_lane_change(right_lane)
                     return True
             if left_lane:
                 if self.consider_lane_change(left_lane, to_right=False):
-                    print("changing")
                     self.do_lane_change(left_lane)
                     return True
 

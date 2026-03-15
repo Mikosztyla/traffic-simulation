@@ -9,6 +9,7 @@ from random import random
 from constants import *
 from traffic_light import TrafficLight
 from car_generator import CarGenerator
+from trafficLightsManager import TrafficLightsManager
 
 pygame.init()
 
@@ -40,13 +41,27 @@ car_speed = 100
 # spawn_interval = MIN_SPAWN_INTERVAL
 
 # Horizontal roads (E-W)
+center = pygame.Vector2(WIDTH // 2, HEIGHT // 2)
+road_length = 700  # length from crossing to edge
+offset = LANE_WIDTH * LANES_PER_SIDE
+offset_road = offset / 2
+north_road_in = Road(pygame.Vector2(center.x + offset_road, center.y + road_length), pygame.Vector2(center.x + offset_road, center.y + offset), Side.N)
+north_road_out = Road(pygame.Vector2(center.x + offset_road, center.y - offset), pygame.Vector2(center.x + offset_road, center.y - road_length), Side.N)
+south_road_in = Road(pygame.Vector2(center.x - offset_road, center.y - road_length), pygame.Vector2(center.x - offset_road, center.y - offset), Side.S)
+south_road_out = Road(pygame.Vector2(center.x - offset_road, center.y + offset), pygame.Vector2(center.x - offset_road, center.y + road_length), Side.S)
+
+# Horizontal roads (E-W)
 west_road_in = Road(pygame.Vector2(center.x + road_length, center.y - offset_road), pygame.Vector2(center.x + offset, center.y - offset_road), Side.W)
 west_road_out = Road(pygame.Vector2(center.x - offset, center.y - offset_road), pygame.Vector2(center.x - road_length, center.y - offset_road), Side.W)
 east_road_in = Road(pygame.Vector2(center.x - road_length, center.y + offset_road), pygame.Vector2(center.x - offset, center.y + offset_road), Side.E)
 east_road_out = Road(pygame.Vector2(center.x + offset, center.y + offset_road), pygame.Vector2(center.x + road_length, center.y + offset_road), Side.E)
 
-car_generator = CarGenerator([road], 0.1)
-
+roads_in = [north_road_in, south_road_in, west_road_in, east_road_in]
+roads_out = [north_road_out, south_road_out, west_road_out, east_road_out]
+all_roads = roads_in + roads_out
+crossing = Crossing(north_road_in, north_road_out, east_road_in, east_road_out, south_road_in, south_road_out, west_road_in, west_road_out)
+car_generator = CarGenerator(roads_in, 0.1)
+traffic_lights_manager = TrafficLightsManager(roads_in)
 while running:
     dt = clock.tick(60) / 1000
 
@@ -54,27 +69,18 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            for tl in traffic_lights:
-                tl.handle_click(event.pos)
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            for traffic_light in traffic_lights:
-                traffic_light.handle_click(event.pos)
-
+            traffic_lights_manager.handle_click(event.pos)
     fill_background(screen)
-    road.draw(screen, car_image)
 
-    for traffic_light in traffic_lights:
-        traffic_light.update(dt)
+    traffic_lights_manager.update(dt)
     
     car_generator.update(dt)
-    road.update_cars(dt)
+    for road in all_roads:
+        road.update_cars(dt)
+        road.draw(screen, car_image)
 
-    # for car in cars:
-    #     car.draw(screen, car_image)
-
-    for traffic_light in traffic_lights:
-        traffic_light.draw(screen)
+    traffic_lights_manager.draw(screen)
+    crossing.update(screen, car_image, dt)
     pygame.display.flip()
 
 pygame.quit()

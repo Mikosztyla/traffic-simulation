@@ -29,7 +29,7 @@ class Crossing:
         self.connectors = []
 
         for road in [north_in, north_out, east_in, east_out, south_in, south_out, west_in, west_out]:
-            road.set_crossing(self)
+            road.crossing = self
 
         self._generate_connectors()
 
@@ -79,6 +79,7 @@ class Crossing:
 
     def add_connector(self, lane, end_lane):
         connector = Lane(lane.end, end_lane.start, None, lane.speed_limit)
+        connector.make_lane_invisible()
         connector.next_lane = end_lane
         lane.next_lane = connector
         self.connectors.append(lane)
@@ -105,9 +106,11 @@ class Crossing:
             return None
         return random.choice(possible)
 
-    def update_cars(self, dt):
+    def update(self, screen, car_image, dt):
         for lane in self.connectors:
-            lane.next_lane.update_cars(dt, None, None)
+            if len(lane.next_lane.cars) > 0:
+                lane.next_lane.update_cars(dt, None, None)
+                lane.next_lane.draw(screen, car_image)
 
     def draw_connectors(self, screen):
 

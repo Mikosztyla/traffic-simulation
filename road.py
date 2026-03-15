@@ -20,9 +20,6 @@ class Road:
         self._create_lanes()
         self.crossing = None
 
-    def set_crossing(self, crossing):
-        self.crossing = crossing
-
     def _create_lanes(self):
         if self.start.x == self.end.x: # vertical (N-S)
             left_start = self.start.x - (self.number_of_lanes * LANE_WIDTH) // 2 + LANE_WIDTH // 2
@@ -45,11 +42,6 @@ class Road:
     def add_car(self, car: Car, lane_id):
         self.lanes[lane_id].add_car(car)
 
-    def spawn_new_car(self, max_acc, max_speed=None):
-        if not max_speed: max_speed = self.speed_limit
-        lane = choice(self.lanes)
-        return lane.spawn_car(max_acc, max_speed)
-    
     def get_available_spawn_lanes(self):
         available_lanes = []
         for lane in self.lanes:
