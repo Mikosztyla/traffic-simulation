@@ -56,7 +56,9 @@ class Car:
 
         # check if changing line is beneficial
         self.last_lane_change += dt
-        if self.last_lane_change < LANE_CHANGE_COOLDOWN or self.speed < LANE_CHANGE_SPEED_THRESHOLD:
+        if self.last_lane_change < LANE_CHANGE_COOLDOWN or \
+            self.speed < LANE_CHANGE_SPEED_THRESHOLD or \
+            self.progress * lane_length < LANE_CHANGE_COOLDOWN_METERS:
             return False
 
         distance_to_crossing = (1 - self.progress) * lane_length / PIXELS_PER_METER
