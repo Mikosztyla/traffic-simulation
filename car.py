@@ -2,19 +2,22 @@ import pygame
 from constants import *
 from idm_model import IDM
 from mobil_model import MOBIL
+from direction import Direction
 
 
 class Car:
-    def __init__(self, lane, speed, target_in_lane_index):
+    def __init__(self, lane, speed, direction: Direction):
         self.current_lane = lane
         self.speed = speed
         self.progress = 0.0  # 0 = start, 1 = end
         self.length = CAR_LENGTH
         self.position = lane.start.copy()
+        if speed != 0:
+            print(self.position)
         self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
         self.in_crossing = False
         self.crossing_target = None
-        self.target_in_lane_index = target_in_lane_index
+        self.direction = direction
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
             time_headway=0.5,
@@ -93,11 +96,6 @@ class Car:
         return lead_car, lag_car
 
     def consider_lane_change(self, target_lane, to_right):
-        current_index = self.current_lane.road.lanes.index(self.current_lane)
-        if to_right and current_index <= self.target_in_lane_index:
-            return False
-        if not to_right and current_index >= self.target_in_lane_index:
-            return False
         lead_car, lag_car = self._get_neighbour_cars(target_lane)
         if lead_car is not None and lead_car.last_lane_change == 0: # lead_car is changing lane
             return False

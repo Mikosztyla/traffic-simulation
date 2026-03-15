@@ -4,6 +4,12 @@ from car import Car
 from stop_car import StopCar
 
 
+def switch_to_new_lane(car, new_lane):
+    car.current_lane = new_lane
+    car.progress = 0
+    car.current_lane.add_car(car)
+
+
 class Lane:
     def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit, lane_width=LANE_WIDTH):
         self.start = start
@@ -17,6 +23,7 @@ class Lane:
         self.cars = []
         self.next_lane = None
         self.should_draw_lane = True
+        self.is_connector = False
 
     def make_lane_invisible(self):
         self.should_draw_lane = False
@@ -32,12 +39,6 @@ class Lane:
 
         self.cars.insert(insert_index, new_car)
 
-    def spawn_car(self, max_acc, max_speed_car):
-        lane = self.road.crossing.get_random_out_lane_and_desired_in_lane(self)
-        car = Car(self, max_speed_car, self.road.lanes.index(lane))
-        self.cars.insert(0, car)
-        return car
-
     def delete_car(self, car: Car):
         self.cars.remove(car)
 
@@ -52,10 +53,12 @@ class Lane:
             if finished: cars_finished.append(car)
 
         for car in cars_finished:
-            if car.current_lane.next_lane is not None:
-                car.current_lane = car.current_lane.next_lane
-                car.progress = 0
-                car.current_lane.add_car(car)
+            if self.road and self.road.crossing:
+                connector = self.road.crossing.get_connector(self, car.direction)
+                if connector is not None:
+                    switch_to_new_lane(car, connector)
+            elif self.next_lane:
+                switch_to_new_lane(car, self.next_lane)
             self.delete_car(car)
 
     def set_red_light(self, point):
@@ -63,7 +66,7 @@ class Lane:
         if self.stop_car is not None:
             return
 
-        stop_car = StopCar(self, self.get_progress_on_lane(point), 0)
+        stop_car = StopCar(self, self.get_progress_on_lane(point), 0, 0)
 
         self.stop_car = stop_car
         self.add_car(stop_car)

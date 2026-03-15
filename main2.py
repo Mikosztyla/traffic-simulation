@@ -81,6 +81,7 @@ while running:
 
     traffic_lights_manager.draw(screen)
     crossing.update(screen, car_image, dt)
+    crossing.draw_connectors(screen)
     pygame.display.flip()
 
 pygame.quit()

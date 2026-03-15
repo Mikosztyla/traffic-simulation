@@ -3,6 +3,7 @@ import pygame
 import math
 from side import Side
 from lane import Lane
+from direction import Direction
 
 
 class Crossing:
@@ -28,10 +29,14 @@ class Crossing:
 
         self.connectors = []
 
-        for road in [north_in, north_out, east_in, east_out, south_in, south_out, west_in, west_out]:
+        for road in [south_in, west_in, north_in, east_in]:
             road.crossing = self
 
         self._generate_connectors()
+        print("-----connectors-------")
+        for _, c, _ in self.connectors:
+            print(c)
+        print("-----connectors-------")
 
     def _generate_connectors(self):
 
@@ -63,61 +68,44 @@ class Crossing:
                 target_road = self.out_roads[OPPOSITE[side]]
                 target_lane = target_road.lanes[i]
 
-                self.add_connector(lane, target_lane)
+                self.add_connector(lane, target_lane, Direction.STRAIGHT)
                 # RIGHT TURN
                 if i == 0:
                     right_road = self.out_roads[RIGHT[side]]
                     right_lane = right_road.lanes[0]
 
-                    self.add_connector(lane, right_lane)
+                    self.add_connector(lane, right_lane, Direction.RIGHT)
 
                 # LEFT TURN
                 if i == len(in_road.lanes) - 1:
                     left_road = self.out_roads[LEFT[side]]
                     left_lane = left_road.lanes[-1]
-                    self.add_connector(lane, left_lane)
+                    self.add_connector(lane, left_lane, Direction.LEFT)
 
-    def add_connector(self, lane, end_lane):
-        connector = Lane(lane.end, end_lane.start, None, lane.speed_limit)
+    def add_connector(self, in_lane, end_lane, direction: Direction):
+        connector = Lane(in_lane.end.copy(), end_lane.start.copy(), None, in_lane.speed_limit)
         connector.make_lane_invisible()
         connector.next_lane = end_lane
-        lane.next_lane = connector
-        self.connectors.append(lane)
+        connector.is_connector = True
+        self.connectors.append((in_lane, connector, direction))
 
-    def get_random_out_lane_and_desired_in_lane(self, lane):
-
-        approach_road = None
-
-        for _, road in self.in_roads.items():
-            if lane in road.lanes:
-                approach_road = road
-                break
-
-        if approach_road is None:
-            return None
-
-        possible = [
-            lane
-            for lane in self.connectors
-            if lane in approach_road.lanes
-        ]
-
-        if not possible:
-            return None
-        return random.choice(possible)
+    def get_connector(self, lane, direction: Direction):
+        for in_lane, connector, d in self.connectors:
+            if in_lane == lane and d == direction:
+                return connector
+        return None
 
     def update(self, screen, car_image, dt):
-        for lane in self.connectors:
-            if len(lane.next_lane.cars) > 0:
-                lane.next_lane.update_cars(dt, None, None)
-                lane.next_lane.draw(screen, car_image)
+        for _, connector, _ in self.connectors:
+            connector.update_cars(dt, None, None)
+            connector.draw(screen, car_image)
 
     def draw_connectors(self, screen):
 
         color = (0, 200, 255)
 
-        for lane in self.connectors:
-            start = lane.end
-            end = lane.next_lane.start
+        for in_lane, connector, _ in self.connectors:
+            start = in_lane.end
+            end = connector.next_lane.start
 
             pygame.draw.line(screen, color, start, end, 2)
