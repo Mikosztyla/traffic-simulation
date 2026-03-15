@@ -26,7 +26,7 @@ class Crossing:
         }
 
         self.connectors = []
-
+        self._generate_connectors()
 
     def _generate_connectors(self):
 
