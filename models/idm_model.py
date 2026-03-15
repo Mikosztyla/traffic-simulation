@@ -12,7 +12,8 @@ class IDM:
     def get_acc(self, speed, following_speed, gap):
         speed_diff = speed - following_speed
         s_star = self._calculate_s_star(speed, speed_diff)
-        return self.acc * (1 - (speed / self.max_speed) ** IDM_DELTA - (s_star / gap) ** 2)
+        acc = self.acc * (1 - (speed / self.max_speed) ** IDM_DELTA - (s_star / gap) ** 2)
+        return acc
     
         
     def _calculate_s_star(self, speed, speed_diff):

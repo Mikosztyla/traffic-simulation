@@ -1,6 +1,4 @@
-import random
 import pygame
-import math
 from side import Side
 from lane import Lane
 from direction import Direction
@@ -29,14 +27,6 @@ class Crossing:
 
         self.connectors = []
 
-        for road in [south_in, west_in, north_in, east_in]:
-            road.crossing = self
-
-        self._generate_connectors()
-        print("-----connectors-------")
-        for _, c, _ in self.connectors:
-            print(c)
-        print("-----connectors-------")
 
     def _generate_connectors(self):
 
@@ -67,13 +57,12 @@ class Crossing:
                 # STRAIGHT
                 target_road = self.out_roads[OPPOSITE[side]]
                 target_lane = target_road.lanes[i]
-
                 self.add_connector(lane, target_lane, Direction.STRAIGHT)
+
                 # RIGHT TURN
                 if i == 0:
                     right_road = self.out_roads[RIGHT[side]]
                     right_lane = right_road.lanes[0]
-
                     self.add_connector(lane, right_lane, Direction.RIGHT)
 
                 # LEFT TURN
@@ -85,27 +74,18 @@ class Crossing:
     def add_connector(self, in_lane, end_lane, direction: Direction):
         connector = Lane(in_lane.end.copy(), end_lane.start.copy(), None, in_lane.speed_limit)
         connector.make_lane_invisible()
-        connector.next_lane = end_lane
-        connector.is_connector = True
-        self.connectors.append((in_lane, connector, direction))
-
-    def get_connector(self, lane, direction: Direction):
-        for in_lane, connector, d in self.connectors:
-            if in_lane == lane and d == direction:
-                return connector
-        return None
+        connector.add_next_lane(end_lane, Direction.STRAIGHT)
+        in_lane.add_next_lane(connector, direction)
+        self.connectors.append(connector)
 
     def update(self, screen, car_image, dt):
-        for _, connector, _ in self.connectors:
+        for connector in self.connectors:
             connector.update_cars(dt, None, None)
             connector.draw(screen, car_image)
 
     def draw_connectors(self, screen):
-
         color = (0, 200, 255)
-
-        for in_lane, connector, _ in self.connectors:
-            start = in_lane.end
-            end = connector.next_lane.start
-
+        for connector in self.connectors:
+            start = connector.start
+            end = connector.end
             pygame.draw.line(screen, color, start, end, 2)

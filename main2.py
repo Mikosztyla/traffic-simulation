@@ -60,7 +60,9 @@ roads_in = [north_road_in, south_road_in, west_road_in, east_road_in]
 roads_out = [north_road_out, south_road_out, west_road_out, east_road_out]
 all_roads = roads_in + roads_out
 crossing = Crossing(north_road_in, north_road_out, east_road_in, east_road_out, south_road_in, south_road_out, west_road_in, west_road_out)
+# car_generator = CarGenerator(roads_in, 0.1)
 car_generator = CarGenerator(roads_in, 0.1)
+
 traffic_lights_manager = TrafficLightsManager(roads_in)
 while running:
     dt = clock.tick(60) / 1000

@@ -3,7 +3,6 @@ from lane import Lane
 from constants import *
 from side import Side
 from car import Car
-from random import choice
 from constants import *
 
 # direction - w którą stronę wskazuje wektor
@@ -18,7 +17,6 @@ class Road:
         self.direction = direction
         self.speed_limit = speed_limit
         self._create_lanes()
-        self.crossing = None
 
     def _create_lanes(self):
         if self.start.x == self.end.x: # vertical (N-S)
@@ -54,7 +52,6 @@ class Road:
             right_lane = self.lanes[i - 1] if i > 0 else None
             left_lane = self.lanes[i + 1] if i + 1 < self.number_of_lanes else None
             lane.update_cars(dt, right_lane, left_lane)
-
     
     def draw(self, screen, car_image):
         for lane in self.lanes:

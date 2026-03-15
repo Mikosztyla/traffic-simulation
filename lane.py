@@ -2,12 +2,7 @@ import pygame
 from constants import *
 from car import Car
 from stop_car import StopCar
-
-
-def switch_to_new_lane(car, new_lane):
-    car.current_lane = new_lane
-    car.progress = 0
-    car.current_lane.add_car(car)
+from direction import Direction
 
 
 class Lane:
@@ -17,13 +12,15 @@ class Lane:
         self.lane_width = lane_width
         self.speed_limit = speed_limit
         self.road = road
-        # TODO na razie robię byle jak na liście, na pewno da się lepiej (może heap?)
         # car[0] ----road----> car[n]
         self.stop_car = None
         self.cars = []
-        self.next_lane = None
         self.should_draw_lane = True
-        self.is_connector = False
+
+        self.next_lanes = {}
+
+    def add_next_lane(self, lane, direction):
+        self.next_lanes[direction] = lane
 
     def make_lane_invisible(self):
         self.should_draw_lane = False
@@ -53,16 +50,16 @@ class Lane:
             if finished: cars_finished.append(car)
 
         for car in cars_finished:
-            if self.road and self.road.crossing:
-                connector = self.road.crossing.get_connector(self, car.direction)
-                if connector is not None:
-                    switch_to_new_lane(car, connector)
-            elif self.next_lane:
-                switch_to_new_lane(car, self.next_lane)
+            if car.progress >= 1 and car.direction in self.next_lanes:
+                new_lane = self.next_lanes.get(car.direction)
+                car.current_lane = new_lane
+                car.progress = 0
+                car.current_lane.add_car(car)
+                car.direction = Direction.STRAIGHT
+
             self.delete_car(car)
 
     def set_red_light(self, point):
-
         if self.stop_car is not None:
             return
 
@@ -72,7 +69,6 @@ class Lane:
         self.add_car(stop_car)
 
     def set_green_light(self):
-
         if self.stop_car is None:
             return
 

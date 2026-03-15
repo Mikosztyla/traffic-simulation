@@ -1,7 +1,7 @@
 import pygame
 from constants import *
-from idm_model import IDM
-from mobil_model import MOBIL
+from models.idm_model import IDM
+from models.mobil_model import MOBIL
 from direction import Direction
 
 
@@ -12,11 +12,7 @@ class Car:
         self.progress = 0.0  # 0 = start, 1 = end
         self.length = CAR_LENGTH
         self.position = lane.start.copy()
-        if speed != 0:
-            print(self.position)
         self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
-        self.in_crossing = False
-        self.crossing_target = None
         self.direction = direction
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
@@ -49,6 +45,7 @@ class Car:
             self.progress += (self.speed * dt + 0.5 * self.acc * dt**2) * PIXELS_PER_METER/ lane_length
             self.speed += self.acc * dt
 
+        # finished current lane
         if self.progress >= 1:
             return True
 
@@ -57,6 +54,7 @@ class Car:
             self.progress
         )
 
+        # check if changing line is beneficial
         self.last_lane_change += dt
         if self.last_lane_change < LANE_CHANGE_COOLDOWN or self.speed < LANE_CHANGE_SPEED_THRESHOLD:
             return False

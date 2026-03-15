@@ -1,6 +1,5 @@
 from car import Car
 from constants import *
-from idm_model import IDM
 
 class StopCar(Car):
 
