@@ -89,8 +89,12 @@ class Lane:
             progress = 1
 
         return max(0, progress)
+    
+    def draw_cars(self, screen, car_image):
+        for car in self.cars:
+            car.draw(screen, car_image)
 
-    def draw(self, screen):
+    def draw(self, screen, car_image):
         direction = (self.end - self.start)
         length = direction.length()
 
@@ -120,3 +124,5 @@ class Lane:
         right1 = self.start - normal * half_width
         right2 = self.end - normal * half_width
         pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+
+        self.draw_cars(screen, car_image)
