@@ -18,7 +18,7 @@ class CarGenerator:
         self.next_spawn_time = self._get_next_spawn_time()
 
     def _get_next_spawn_time(self):
-        return min(MAX_SPAWN_TIME, random.expovariate(self.inflow), 4)
+        return min(MAX_SPAWN_TIME, random.expovariate(self.inflow), MAX_SPAWN_TIME)
 
     def update(self, dt):
         self.time_since_last += dt

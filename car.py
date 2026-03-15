@@ -33,9 +33,7 @@ class Car:
         lane_vector = self.current_lane.end - self.current_lane.start
         lane_length = lane_vector.length()
 
-        gap = self.get_gap(following_car)
-        following_car_speed = following_car.speed if following_car else self.speed
-        self.acc = self.idm.get_acc(self.speed, following_car_speed, gap)
+        self._update_acc(following_car)
 
         if self.speed + self.acc * dt < 0:
             stop_distance = -0.5 * self.speed**2 / self.acc * PIXELS_PER_METER
@@ -73,6 +71,25 @@ class Car:
                     return True
 
         return False
+    
+    def _update_acc(self, following_car):
+        gap = self.get_gap(following_car)
+        following_car_speed = self.speed
+        if following_car:
+            following_car_speed = following_car.speed
+        else:
+            # if first in lane and next lane exists, check the last car on next lane
+            next_lane = self.current_lane.get_next_lane(self.direction)
+            if next_lane:
+                if next_lane.cars:
+                    following_car_speed = next_lane.cars[0].speed
+                # as a connector can be quite short, check also next road
+                else:
+                    next_next_line = next_lane.get_next_lane(Direction.STRAIGHT)
+                    if next_next_line and next_next_line.cars:
+                        following_car_speed = next_next_line.cars[0].speed
+            
+        self.acc = self.idm.get_acc(self.speed, following_car_speed, gap)
 
     def get_gap(self, following_car):
         if following_car is None:

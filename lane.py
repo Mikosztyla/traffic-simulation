@@ -51,13 +51,16 @@ class Lane:
 
         for car in cars_finished:
             if car.progress >= 1 and car.direction in self.next_lanes:
-                new_lane = self.next_lanes.get(car.direction)
+                new_lane = self.get_next_lane(car.direction)
                 car.current_lane = new_lane
                 car.progress = 0
                 car.current_lane.add_car(car)
                 car.direction = Direction.STRAIGHT
 
             self.delete_car(car)
+
+    def get_next_lane(self, direction):
+        return self.next_lanes.get(direction)
 
     def set_red_light(self, point):
         if self.stop_car is not None:
