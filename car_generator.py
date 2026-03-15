@@ -15,14 +15,18 @@ class CarGenerator:
         self.inflow_roads = inflow_roads
         self.inflow = inflow
         self.time_since_last = 0
+        self.next_spawn_time = self._get_next_spawn_time()
+
+    def _get_next_spawn_time(self):
+        return min(MAX_SPAWN_TIME, random.expovariate(self.inflow), 4)
 
     def update(self, dt):
         self.time_since_last += dt
-        real_interval = random.expovariate(self.inflow)
-        if self.time_since_last < real_interval:
+        if self.time_since_last < self.next_spawn_time:
             return
 
         self.time_since_last = 0
+        self.next_spawn_time = self._get_next_spawn_time()
 
         available_lanes = []
         for road in self.inflow_roads:
