@@ -5,7 +5,6 @@ from direction import Direction
 
 # inflow - [cars/s]
 
-# TODO: lepsze losowanie kierunku jazdy przy spawnowaniu auta
 def get_random_direction():
     if RIGHT_PROBABILITY + LEFT_PROBABILITY > 1:
         raise ValueError(f"Sum of left and right turn probabilities grater then 0 ({LEFT_PROBABILITY} + {RIGHT_PROBABILITY} = {LEFT_PROBABILITY + RIGHT_PROBABILITY})")
@@ -32,6 +31,7 @@ class CarGenerator:
 
         self.time_since_last = 0
         self.next_spawn_time = self._get_next_spawn_time()
+        # self.next_spawn_time = 100
 
         available_lanes = []
         for road in self.inflow_roads:

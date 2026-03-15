@@ -96,6 +96,12 @@ class Lane:
 
         return max(0, progress)
     
+    def get_number_of_neighbour_lanes_in_direction(self, direction):
+        if direction == Direction.LEFT:
+            return len(self.road.lanes) - self.road.lanes.index(self) - 1
+        elif direction == Direction.RIGHT:
+            return self.road.lanes.index(self)
+    
     def draw_cars(self, screen, car_image):
         for car in self.cars:
             car.draw(screen, car_image)
