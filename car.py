@@ -77,6 +77,7 @@ class Car:
 
         self._check_conflicts(lane_length)
 
+        self._update_acc(following_car) # now mobil has the acc calculated with curr speed
         # check if changing line is beneficial or mandatory
         self.last_lane_change += dt
         if self.direction == Direction.RIGHT:
@@ -194,7 +195,7 @@ class Car:
                 lag_car = target_lane.cars[i - 1] if i - 1 >= 0 else None
                 break
         else:
-            lead_car = None
+            lead_car = self.stop_cars[CONFLICT_STOP_CAR]
             lag_car = target_lane.cars[-1] if target_lane.cars else None
 
         return lead_car, lag_car

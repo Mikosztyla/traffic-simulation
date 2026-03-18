@@ -124,3 +124,4 @@ class ConflictManager:
     def draw_conflicts(self, screen):
         for conflict in self.conflicts:
             conflict.draw_collision_point(screen)
+            

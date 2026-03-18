@@ -23,3 +23,4 @@ class IDM:
     
     def update_max_speed(self, max_speed):
         self.max_speed = max_speed
+        

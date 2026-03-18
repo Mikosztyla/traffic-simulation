@@ -15,5 +15,3 @@ class MOBIL:
         incentive_val = new_acc - curr_acc + self.politeness * new_acc_other + self.bias * to_right_factor
 
         return incentive_val > self.acc_thr
-
-    

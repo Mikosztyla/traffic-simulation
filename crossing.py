@@ -85,7 +85,8 @@ class Crossing:
 
     def draw(self, screen):
         pygame.draw.rect(screen, (50, 50, 50), self.rect)
-        self.conflict_manager.draw_conflicts(screen)
+        # debug print
+        # self.conflict_manager.draw_conflicts(screen)
 
     def draw_connectors(self, screen):
         color = (0, 200, 255)
