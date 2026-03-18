@@ -72,7 +72,7 @@ while running:
     crossing.update(screen, dt)
 
     traffic_lights_manager.draw(screen)
-    # crossing.draw_connectors(screen)
+    crossing.draw_connectors(screen)
     stats = {
         "Spawned cars": car_generator.total_spawned,
         "Current cars": stats_panel.get_current_cars()
