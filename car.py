@@ -5,11 +5,15 @@ from models.mobil_model import MOBIL
 from direction import Direction
 from stop_car import StopCar
 
+MOBIL_STOP_CAR = "Mobil_stop_car"
+CONFLICT_STOP_CAR = "Conflict_stop_car"
+
 
 class Car:
     def __init__(self, lane, speed, direction: Direction, image):
         self.current_lane = lane
         self.speed = speed
+        self.acc = 0
         self.progress = 0.0  # 0 = start, 1 = end
         self.length = CAR_LENGTH
         self.position = lane.start.copy()
@@ -20,7 +24,7 @@ class Car:
             max_speed=self.current_lane.speed_limit,
             time_headway=0.5,
             min_gap=1,
-            acc=1.5,
+            acc=1.8,
             dcc=3
         )
 
@@ -45,7 +49,8 @@ class Car:
             bias=10
         )
 
-        self.stop_car = None
+        self.stop_cars = {MOBIL_STOP_CAR: None,
+                          CONFLICT_STOP_CAR: None}
 
     def update(self, following_car, right_lane, left_lane, dt):
         lane_vector = self.current_lane.end - self.current_lane.start
@@ -58,7 +63,7 @@ class Car:
             self.speed = 0
             self.progress += stop_distance / lane_length
         else:
-            self.progress += (self.speed * dt + 0.5 * self.acc * dt**2) * PIXELS_PER_METER/ lane_length
+            self.progress += (self.speed * dt + 0.5 * self.acc * dt**2) * PIXELS_PER_METER / lane_length
             self.speed += self.acc * dt
 
         # finished current lane
@@ -69,6 +74,8 @@ class Car:
             self.current_lane.end,
             self.progress
         )
+
+        self._check_conflicts(lane_length)
 
         # check if changing line is beneficial or mandatory
         self.last_lane_change += dt
@@ -96,9 +103,30 @@ class Car:
         following_car_speed = following_car.speed if following_car else self.speed
         self.acc = self.calculate_acc(self.speed, following_car_speed, gap)
 
-        if self.stop_car:
-            stop_car_gap = self.get_gap(self.stop_car)
-            self.acc = min(self.acc, self.calculate_acc(self.speed, self.stop_car.speed, stop_car_gap))
+        stop_car = self._get_closer_stop_car()
+        if stop_car:
+            stop_car_gap = self.get_gap(stop_car)
+            self.acc = min(self.acc, self.calculate_acc(self.speed, stop_car.speed, stop_car_gap))
+
+    def _get_closer_stop_car(self):
+        stop_cars = [stop_car for stop_car in self.stop_cars.values() if stop_car is not None]
+        min_progress = 1
+        best_car = None
+        for stop_car in stop_cars:
+            if stop_car.progress <= min_progress:
+                min_progress = stop_car.progress
+                best_car = stop_car
+        return best_car
+
+    def _check_conflicts(self, lane_length):
+        if (1 - self.progress) * lane_length > CHECK_CONFLICT_DIST_PIXELS:
+            return # too far from intersection to check conflicts
+        
+        for possible_conflict in self.current_lane.conflicts.get(self.direction, []):
+            if possible_conflict.is_conflict(self):
+                self.stop_cars[CONFLICT_STOP_CAR] = self._get_stop_car(STOP_CONFLICT_DIST_M * PIXELS_PER_METER, lane_length)
+                return
+        self.stop_cars[CONFLICT_STOP_CAR] = None
 
     def calculate_acc(self, speed, following_car_speed, gap):
         return self.idm.get_acc(speed, following_car_speed, gap)
@@ -126,12 +154,12 @@ class Car:
     def _mandatory_mobil_decision(self, neighbour_lane, lane_length):
         # already in good lane
         if neighbour_lane is None:
-            self.stop_car = None
+            self.stop_cars[MOBIL_STOP_CAR] = None
             return False
         
         number_of_lanes_to_change = self.current_lane.get_number_of_neighbour_lanes_in_direction(self.direction)
         if self.last_lane_change < MANDATORY_LC_COOLDOWN:
-            self._place_stop_car(number_of_lanes_to_change, lane_length)
+            self.stop_cars[MOBIL_STOP_CAR] = self._get_stop_car(number_of_lanes_to_change * MANDATORY_LC_DISTANCE_PER_LANE_PIXELS, lane_length)
             return False
         
         to_right = self.direction == Direction.RIGHT
@@ -139,17 +167,16 @@ class Car:
         if to_right and self.consider_lane_change(neighbour_lane, True, self.mobil_mandatory_right) or \
             not to_right and self.consider_lane_change(neighbour_lane, False, self.mobil_mandatory_left):
             self.do_lane_change(neighbour_lane)
-            self.stop_car = None
+            self.stop_cars[MOBIL_STOP_CAR] = None
             return True
 
-        self._place_stop_car(number_of_lanes_to_change, lane_length)
+        self.stop_cars[MOBIL_STOP_CAR] = self._get_stop_car(number_of_lanes_to_change * MANDATORY_LC_DISTANCE_PER_LANE_PIXELS, lane_length)
         return False
 
-    def _place_stop_car(self, number_of_lanes, lane_length):
-        distance_pixels = MANDATORY_LC_DISTANCE_PER_LANE_PIXELS * number_of_lanes
-        progress = 1 - distance_pixels / lane_length
+    def _get_stop_car(self, dist_from_end_pixels, lane_length):
+        progress = 1 - dist_from_end_pixels / lane_length
         progress = max(0, progress)
-        self.stop_car = StopCar(self.current_lane, progress, 0, None)
+        return StopCar(self.current_lane, progress, 0, None)
 
     def get_gap(self, following_car):
         if following_car is None:

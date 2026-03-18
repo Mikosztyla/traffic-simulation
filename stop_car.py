@@ -1,7 +1,6 @@
 from constants import *
 
 
-# istnieje szansa że pojawi się problem, jak gdzieś się wywoła self.idm.get_acc przy mobilu ale jak coś to zrobię fixa
 class StopCar():
 
     def __init__(self, lane, progress, speed, target_in_lane_index):
@@ -10,6 +9,7 @@ class StopCar():
         self.progress = progress
         self.speed = 0
         self.position = lane.start.lerp(lane.end, progress)
+        self.direction = None
 
     def calculate_acc(self, *args, **kwargs):
         return 0

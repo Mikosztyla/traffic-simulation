@@ -1,7 +1,8 @@
 import pygame
-from side import Side
+from side import Side, RIGHT, LEFT, OPPOSITE
 from lane import Lane
 from direction import Direction
+from conflict_manager import ConflictManager
 
 
 class Crossing:
@@ -27,6 +28,9 @@ class Crossing:
 
         self.connectors = []
         self._generate_connectors()
+
+        self.conflict_manager = ConflictManager(self.in_roads, self.out_roads)
+
         lanes = []
 
         for road in self.in_roads.values():
@@ -46,27 +50,6 @@ class Crossing:
         )
 
     def _generate_connectors(self):
-
-        RIGHT = {
-            Side.N: Side.W,
-            Side.E: Side.N,
-            Side.S: Side.E,
-            Side.W: Side.S
-        }
-
-        LEFT = {
-            Side.N: Side.E,
-            Side.W: Side.N,
-            Side.S: Side.W,
-            Side.E: Side.S
-        }
-
-        OPPOSITE = {
-            Side.N: Side.S,
-            Side.S: Side.N,
-            Side.E: Side.W,
-            Side.W: Side.E
-        }
 
         for side, in_road in self.in_roads.items():
             for i, lane in enumerate(in_road.lanes):
@@ -102,6 +85,7 @@ class Crossing:
 
     def draw(self, screen):
         pygame.draw.rect(screen, (50, 50, 50), self.rect)
+        self.conflict_manager.draw_conflicts(screen)
 
     def draw_connectors(self, screen):
         color = (0, 200, 255)

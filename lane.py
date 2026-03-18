@@ -34,9 +34,15 @@ class Lane:
         self.should_draw_lane = True
 
         self.next_lanes = {}
+        self.conflicts = {Direction.LEFT: [],
+                          Direction.RIGHT: [],
+                          Direction.STRAIGHT: []}
 
     def add_next_lane(self, lane, direction):
         self.next_lanes[direction] = lane
+
+    def add_conflict(self, conflict, direction):
+        self.conflicts[direction].append(conflict)
 
     def make_lane_invisible(self):
         self.should_draw_lane = False

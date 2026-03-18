@@ -13,6 +13,8 @@ class IDM:
         speed_diff = speed - following_speed
         s_star = self._calculate_s_star(speed, speed_diff)
         acc = self.acc * (1 - (speed / self.max_speed) ** IDM_DELTA - (s_star / gap) ** 2)
+        if abs(acc) < 0.001:
+            return 0
         return acc
     
         
