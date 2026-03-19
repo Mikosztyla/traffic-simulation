@@ -47,7 +47,7 @@ stats_panel = StatsPanel(all_roads, crossing)
 traffic_lights_manager = TrafficLightsManager(roads_in)
 
 while running:
-    dt = clock.tick(60) / 1000
+    dt = clock.tick(60) / 1000 * 2
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

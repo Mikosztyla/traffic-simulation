@@ -21,7 +21,6 @@ class ConflictManager:
             # straight
             conflict_road = self.roads_in[RIGHT[in_side]]
             for i, lane in enumerate(road.lanes):
-                print(i)
                 for conflict_lane in conflict_road.lanes:
                     conflict_directions = [Direction.LEFT, Direction.STRAIGHT]
                     if i == 0:

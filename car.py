@@ -29,24 +29,24 @@ class Car:
         )
 
         self.mobil = MOBIL(
-            politeness=0.6,
-            save_dcc=3,
-            acc_thr=0.8,
-            bias=1
+            politeness=POLITENESS,
+            save_dcc=SAVE_DCC,
+            acc_thr=ACC_THRESHOLD,
+            bias=BIAS
         )
 
         self.mobil_mandatory_left = MOBIL(
-            politeness=0.1,
-            save_dcc=3,
-            acc_thr=0,
-            bias=-10
+            politeness=M_POLITENESS,
+            save_dcc=M_SAVE_DCC,
+            acc_thr=M_ACC_THRESHOLD,
+            bias=-M_BIAS
         )
 
         self.mobil_mandatory_right = MOBIL(
-            politeness=0.1,
-            save_dcc=3,
-            acc_thr=0,
-            bias=10
+            politeness=M_POLITENESS,
+            save_dcc=M_SAVE_DCC,
+            acc_thr=M_ACC_THRESHOLD,
+            bias=M_BIAS
         )
 
         self.stop_cars = {MOBIL_STOP_CAR: None,
@@ -179,7 +179,7 @@ class Car:
     def _get_stop_car(self, dist_from_end_pixels, lane_length):
         progress = 1 - dist_from_end_pixels / lane_length
         progress = max(0, progress)
-        return StopCar(self.current_lane, progress, 0, None)
+        return StopCar(self.current_lane, progress)
 
     def get_gap(self, following_car):
         if following_car is None:

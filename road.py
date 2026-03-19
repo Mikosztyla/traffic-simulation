@@ -22,7 +22,7 @@ class Road:
         if self.start.x == self.end.x: # vertical (N-S)
             left_start = self.start.x - (self.number_of_lanes * LANE_WIDTH) // 2 + LANE_WIDTH // 2
             for _ in range(self.number_of_lanes):
-                self.lanes.append(Lane(pygame.Vector2(left_start, self.start.y), pygame.Vector2(left_start, self.end.y), self, self.speed_limit, LANE_WIDTH))
+                self.lanes.append(Lane(pygame.Vector2(left_start, self.start.y), pygame.Vector2(left_start, self.end.y), self, self.speed_limit))
                 left_start += LANE_WIDTH
             if self.direction == Side.N:
                 self.lanes.reverse()
@@ -30,7 +30,7 @@ class Road:
         elif self.start.y == self.end.y: # horizontal (E-W)
             up_start = self.start.y - (self.number_of_lanes * LANE_WIDTH) // 2 + LANE_WIDTH // 2
             for _ in range(self.number_of_lanes):
-                self.lanes.append(Lane(pygame.Vector2(self.start.x, up_start), pygame.Vector2(self.end.x, up_start), self, self.speed_limit, LANE_WIDTH))
+                self.lanes.append(Lane(pygame.Vector2(self.start.x, up_start), pygame.Vector2(self.end.x, up_start), self, self.speed_limit))
                 up_start += LANE_WIDTH
             if self.direction == Side.E:
                 self.lanes.reverse()

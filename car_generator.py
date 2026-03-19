@@ -44,7 +44,6 @@ class CarGenerator:
 
         self.time_since_last = 0
         self.next_spawn_time = self._get_next_spawn_time()
-        # self.next_spawn_time = 100
 
         available_lanes = []
         for road in self.inflow_roads:

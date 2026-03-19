@@ -3,7 +3,7 @@ from constants import *
 
 class StopCar():
 
-    def __init__(self, lane, progress, speed, target_in_lane_index):
+    def __init__(self, lane, progress):
         self.last_lane_change = float('inf')
         self.length = STOP_OFFSET_METERS * PIXELS_PER_METER * 2
         self.progress = progress

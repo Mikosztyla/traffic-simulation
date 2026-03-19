@@ -22,10 +22,10 @@ def draw_dashed_line(screen, color, start, end, dash_length=20, gap_length=10, w
 
 
 class Lane:
-    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit, lane_width=LANE_WIDTH):
+    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit):
         self.start = start
         self.end = end
-        self.lane_width = lane_width
+        self.lane_width = LANE_WIDTH
         self.speed_limit = speed_limit
         self.road = road
         # car[0] ----road----> car[n]
@@ -88,7 +88,7 @@ class Lane:
         if self.stop_car is not None:
             return
 
-        stop_car = StopCar(self, self.get_progress_on_lane(point), 0, 0)
+        stop_car = StopCar(self, self.get_progress_on_lane(point))
 
         self.stop_car = stop_car
         self.add_car(stop_car)

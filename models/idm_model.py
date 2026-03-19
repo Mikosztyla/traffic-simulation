@@ -1,5 +1,5 @@
 from math import sqrt
-from constants import IDM_DELTA
+from constants import *
 
 class IDM:
     def __init__(self, max_speed, time_headway, min_gap, acc, dcc):
