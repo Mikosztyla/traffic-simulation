@@ -22,17 +22,17 @@ class Car:
         self.image = image
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
-            time_headway=0.5,
+            time_headway=0.8,
             min_gap=1,
-            acc=1.8,
-            dcc=3
+            acc=2.5,
+            dcc=2
         )
 
         self.mobil = MOBIL(
-            politeness=0.4,
+            politeness=0.6,
             save_dcc=3,
-            acc_thr=0.4,
-            bias=0.5
+            acc_thr=0.8,
+            bias=1
         )
 
         self.mobil_mandatory_left = MOBIL(
@@ -77,7 +77,6 @@ class Car:
 
         self._check_conflicts(lane_length)
 
-        self._update_acc(following_car) # now mobil has the acc calculated with curr speed
         # check if changing line is beneficial or mandatory
         self.last_lane_change += dt
         if self.direction == Direction.RIGHT:
@@ -137,6 +136,9 @@ class Car:
             self.speed < LANE_CHANGE_SPEED_THRESHOLD or \
             self.progress * lane_length < LANE_CHANGE_COOLDOWN_PIXELS:
             return False
+        
+        if self.stop_cars[CONFLICT_STOP_CAR] is not None:
+            return False
 
         distance_to_crossing = (1 - self.progress) * lane_length
         if distance_to_crossing > LANE_CHANGE_COOLDOWN_PIXELS:
@@ -195,7 +197,7 @@ class Car:
                 lag_car = target_lane.cars[i - 1] if i - 1 >= 0 else None
                 break
         else:
-            lead_car = self.stop_cars[CONFLICT_STOP_CAR]
+            lead_car = None
             lag_car = target_lane.cars[-1] if target_lane.cars else None
 
         return lead_car, lag_car
@@ -225,16 +227,9 @@ class Car:
 
 
     def draw(self, screen):
-        # compute lane direction vector
         direction = self.current_lane.end - self.current_lane.start
-        if direction.length() == 0:
-            return
-        angle = direction.angle_to(pygame.Vector2(0, -1))  # angle between lane and upward vector
+        angle = direction.angle_to(pygame.Vector2(0, -1))
 
-        # rotate the car image
         rotated_image = pygame.transform.rotate(self.image, angle)
-
-        # get the rect centered at car position
         rect = rotated_image.get_rect(center=self.position)
-
         screen.blit(rotated_image, rect)

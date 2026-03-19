@@ -5,8 +5,8 @@ from side import Side
 from car import Car
 from constants import *
 
-# direction - w którą stronę wskazuje wektor
-# przyjmuję że najbardziej prawy pas to lanes[0]
+# direction - pointing by vector
+# lane[0] - right lane
 
 class Road:
     def __init__(self, start: pygame.Vector2, end: pygame.Vector2, direction: Side, speed_limit=ROAD_SPEED_LIMIT, number_of_lanes=LANES_PER_SIDE):

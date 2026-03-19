@@ -2,8 +2,6 @@ from math import sqrt
 from constants import *
 import pygame
 
-# sprawdzam tylko dla aut które znajdują się na dobrym pasie
-# w sensie nie uwzględniam tych co chcą skręcić w prawo a nie są na skrajym itp
 
 class Conflict:
     def __init__(self, lane, directions, v1, v2):

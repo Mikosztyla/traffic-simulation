@@ -142,7 +142,7 @@ class Lane:
             half_width = self.lane_width / 2
             edge_thickness = 3
 
-            # --- Road surface polygon ---
+            # road surface
             p1 = self.start + normal * half_width
             p2 = self.start - normal * half_width
             p3 = self.end - normal * half_width
@@ -150,11 +150,11 @@ class Lane:
 
             pygame.draw.polygon(screen, (50, 50, 50), [p1, p2, p3, p4])
 
-            # --- Left white edge ---
+            # left white edge
             left1 = self.start + normal * half_width
             left2 = self.end + normal * half_width
 
-            # --- Right white edge ---
+            # right white edge
             right1 = self.start - normal * half_width
             right2 = self.end - normal * half_width
             lane_index = self.road.lanes.index(self)
