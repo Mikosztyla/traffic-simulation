@@ -28,7 +28,7 @@ class ConflictManager:
                         conflict_directions.append(Direction.RIGHT)
                     self._create_conflict(lane, Direction.STRAIGHT, conflict_lane, conflict_directions, lane, conflict_lane)
 
-            # # left turn
+            # left turn
             lane = road.lanes[-1]
             conflict_road = self.roads_in[RIGHT[in_side]]
             conflict_lane = conflict_road.lanes[-1]
