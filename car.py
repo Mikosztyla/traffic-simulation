@@ -20,6 +20,12 @@ class Car:
         self.last_lane_change = LANE_CHANGE_COOLDOWN - 0.2
         self.direction = direction
         self.image = image
+
+        self.is_changing_lane = False
+        self.lc_timer = 0
+        self.source_lane = None
+        self.target_lane = None
+
         self.idm = IDM(
             max_speed=self.current_lane.speed_limit,
             time_headway=0.8,
@@ -54,10 +60,36 @@ class Car:
 
     def update(self, following_car, right_lane, left_lane, dt):
         lane_vector = self.current_lane.end - self.current_lane.start
-        lane_length = lane_vector.length()
+        lane_length = lane_vector.length()       
 
         self._update_acc(following_car)
+        self._update_progress(dt, lane_length)
+        
+        if self.is_changing_lane:
+            self._update_lane_change(dt)
+        else:
+            self.position = self.current_lane.start.lerp(
+                self.current_lane.end,
+                self.progress
+            )
 
+        # finished current lane
+        if self.progress >= 1:
+            return True
+
+        self._check_conflicts(lane_length)
+
+        # check if changing line is beneficial or mandatory
+        self.last_lane_change += dt
+        if not self.is_changing_lane:
+            if self.direction == Direction.RIGHT:
+                return self._mandatory_mobil_decision(right_lane, lane_length) 
+            elif self.direction == Direction.LEFT:
+                return self._mandatory_mobil_decision(left_lane, lane_length)
+            return self._standard_mobil_decision(left_lane, right_lane, lane_length) 
+        
+    
+    def _update_progress(self, dt, lane_length):
         if self.speed + self.acc * dt < 0:
             stop_distance = -0.5 * self.speed**2 / self.acc * PIXELS_PER_METER
             self.speed = 0
@@ -65,38 +97,38 @@ class Car:
         else:
             self.progress += (self.speed * dt + 0.5 * self.acc * dt**2) * PIXELS_PER_METER / lane_length
             self.speed += self.acc * dt
-
-        # finished current lane
-        if self.progress >= 1:
-            return True
-
-        self.position = self.current_lane.start.lerp(
-            self.current_lane.end,
-            self.progress
-        )
-
-        self._check_conflicts(lane_length)
-
-        # check if changing line is beneficial or mandatory
-        self.last_lane_change += dt
-        if self.direction == Direction.RIGHT:
-            return self._mandatory_mobil_decision(right_lane, lane_length)
-        elif self.direction == Direction.LEFT:
-            return self._mandatory_mobil_decision(left_lane, lane_length)
-        return self._standard_mobil_decision(left_lane, right_lane, lane_length)
+        self.progress = min(self.progress, 1)
     
-    def _update_acc(self, following_car):
+    def _update_lane_change(self, dt):
+        self.lc_timer += dt
+
+        t = min(self.lc_timer / LANE_CHANGE_DURATION, 1)
+        pos_a = self.source_lane.start.lerp(self.source_lane.end, self.progress)
+        pos_b = self.target_lane.start.lerp(self.target_lane.end, self.progress)
+
+        # smooth animation
+        t = t * t * (3 - 2 * t)
+
+        self.position = pos_a.lerp(pos_b, t)
+        if t >= 1:
+            self.is_changing_lane = False
+
+    def _get_following_car(self, following_car, lane):
         if not following_car:
             # if first in lane and next lane exists, check the last car in next lane
-            next_lane = self.current_lane.get_next_lane(self.direction)
+            next_lane = lane.get_next_lane(self.direction)
             if next_lane:
                 if next_lane.cars:
-                    following_car = next_lane.cars[0]
+                    return next_lane.cars[0]
                 # as a connector can be quite short, check also next road
                 else:
                     next_next_line = next_lane.get_next_lane(Direction.STRAIGHT)
                     if next_next_line and next_next_line.cars:
-                        following_car = next_next_line.cars[0]
+                        return next_next_line.cars[0]
+        return following_car
+    
+    def _update_acc(self, following_car):
+        following_car = self._get_following_car(following_car, self.current_lane)
 
         gap = self.get_gap(following_car)
         following_car_speed = following_car.speed if following_car else self.speed
@@ -133,14 +165,14 @@ class Car:
     def _standard_mobil_decision(self, left_lane, right_lane, lane_length):
         if self.last_lane_change < LANE_CHANGE_COOLDOWN or \
             self.speed < LANE_CHANGE_SPEED_THRESHOLD or \
-            self.progress * lane_length < LANE_CHANGE_COOLDOWN_PIXELS:
+            self.progress * lane_length < LANE_CHANGE_COOLDOWN_PIXELS_BEFORE:
             return False
         
         if self.stop_cars[CONFLICT_STOP_CAR] is not None:
             return False
 
         distance_to_crossing = (1 - self.progress) * lane_length
-        if distance_to_crossing > LANE_CHANGE_COOLDOWN_PIXELS:
+        if distance_to_crossing > LANE_CHANGE_COOLDOWN_PIXELS_BEFORE:
             if right_lane:
                 if self.consider_lane_change(right_lane, to_right=True, mobil_model=self.mobil):
                     self.do_lane_change(right_lane)
@@ -233,8 +265,6 @@ class Car:
 
     def consider_lane_change(self, target_lane, to_right, mobil_model):
         lead_car, lag_car = self._get_neighbour_cars(target_lane)
-        if lead_car is not None and lead_car.last_lane_change == 0: # lead_car is changing lane
-            return False
 
         new_acc = self.calculate_acc(self.speed, lead_car.speed if lead_car else self.speed, self.get_gap(lead_car))
 
@@ -246,13 +276,12 @@ class Car:
     
     def do_lane_change(self, target_lane):
         target_lane.add_car(self)
+        self.source_lane = self.current_lane
         self.current_lane = target_lane
-
-        self.position = self.current_lane.start.lerp(
-            self.current_lane.end,
-            self.progress
-        )
+        self.target_lane = target_lane
         self.last_lane_change = 0
+        self.lc_timer = 0
+        self.is_changing_lane = True
 
 
     def draw(self, screen):

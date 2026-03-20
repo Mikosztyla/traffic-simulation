@@ -56,3 +56,6 @@ class Road:
     def draw(self, screen):
         for lane in self.lanes:
             lane.draw(screen)
+        
+        for lane in self.lanes:
+            lane.draw_cars(screen)

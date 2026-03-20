@@ -83,6 +83,9 @@ class Crossing:
             connector.update_cars(dt, None, None)
             connector.draw(screen)
 
+        for connector in self.connectors:
+            connector.draw_cars(screen)
+
     def draw(self, screen):
         pygame.draw.rect(screen, (50, 50, 50), self.rect)
         # debug print

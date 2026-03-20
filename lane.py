@@ -174,5 +174,3 @@ class Lane:
                 pass
             else:
                 draw_dashed_line(screen, (255, 255, 255), right1, right2, width=edge_thickness)
-
-        self.draw_cars(screen)
