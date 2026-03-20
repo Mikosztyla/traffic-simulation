@@ -47,7 +47,7 @@ stats_panel = StatsPanel(all_roads, crossing)
 traffic_lights_manager = TrafficLightsManager(roads_in)
 
 while running:
-    dt = clock.tick(60) / 1000 * 2
+    dt = clock.tick(60) / 1000 * SIMULATION_SPEED
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -73,7 +73,7 @@ while running:
 
     traffic_lights_manager.draw(screen)
     # debug print
-    crossing.draw_connectors(screen)
+    # crossing.draw_connectors(screen)
     stats = {
         "Spawned cars": car_generator.total_spawned,
         "Current cars": stats_panel.get_current_cars()

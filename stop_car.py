@@ -1,5 +1,7 @@
 from constants import *
 
+MOBIL_STOP_CAR = "Mobil_stop_car"
+CONFLICT_STOP_CAR = "Conflict_stop_car"
 
 class StopCar():
 
@@ -10,6 +12,8 @@ class StopCar():
         self.speed = 0
         self.position = lane.start.lerp(lane.end, progress)
         self.direction = None
+        self.stop_cars = {MOBIL_STOP_CAR: None,
+                          CONFLICT_STOP_CAR: None}
 
     def calculate_acc(self, *args, **kwargs):
         return 0

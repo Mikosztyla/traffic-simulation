@@ -84,7 +84,6 @@ class Car:
         elif self.direction == Direction.LEFT:
             return self._mandatory_mobil_decision(left_lane, lane_length)
         return self._standard_mobil_decision(left_lane, right_lane, lane_length)
-
     
     def _update_acc(self, following_car):
         if not following_car:
@@ -174,12 +173,42 @@ class Car:
             return True
 
         self.stop_cars[MOBIL_STOP_CAR] = self._get_stop_car(number_of_lanes_to_change * MANDATORY_LC_DISTANCE_PER_LANE_PIXELS, lane_length)
+        self._resolve_mandatory_lc_conflict(neighbour_lane)
         return False
 
     def _get_stop_car(self, dist_from_end_pixels, lane_length):
         progress = 1 - dist_from_end_pixels / lane_length
         progress = max(0, progress)
         return StopCar(self.current_lane, progress)
+    
+    def _is_lc_conflict(self, other):
+        if other is not None:
+            other_stop_car = other.stop_cars[MOBIL_STOP_CAR]
+            if other_stop_car and \
+                (other_stop_car.position - self.stop_cars[MOBIL_STOP_CAR].position).length() < self.current_lane.lane_width + 1:
+                return True
+        return False
+    
+    def _resolve_mandatory_lc_conflict(self, neighbour_lane):
+        if self.direction == Direction.LEFT:
+            lead_car, lag_car = self._get_neighbour_cars(neighbour_lane)
+            if self._is_lc_conflict(lead_car):
+                conflict_car = lead_car
+            elif self._is_lc_conflict(lag_car):
+                conflict_car = lag_car
+            else:
+                return
+            
+            conflict_car_id = neighbour_lane.cars.index(conflict_car)
+            if conflict_car_id + 1 < len(neighbour_lane.cars):
+                lead_conflict_car = neighbour_lane.cars[conflict_car_id + 1]
+            else:
+                self.stop_cars[MOBIL_STOP_CAR] = None
+                return
+
+            gap = (conflict_car.position - lead_conflict_car.position).length() - (conflict_car.length + lead_conflict_car.length) / 2
+            if gap > MANDATORY_LC_CONFLICT_SAFE_GAP_PIXELS:
+                self.stop_cars[MOBIL_STOP_CAR] = None
 
     def get_gap(self, following_car):
         if following_car is None:
