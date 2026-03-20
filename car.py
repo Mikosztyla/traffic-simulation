@@ -98,15 +98,20 @@ class Car:
             self.progress += (self.speed * dt + 0.5 * self.acc * dt**2) * PIXELS_PER_METER / lane_length
             self.speed += self.acc * dt
         self.progress = min(self.progress, 1)
+
+    def get_lane_change_duration(self):
+        t = min(self.speed / 12.0, 1.0)
+        return LANE_CHANGE_DURATION_MAX - (LANE_CHANGE_DURATION_MAX - LANE_CHANGE_DURATION_MIN) * t
     
     def _update_lane_change(self, dt):
         self.lc_timer += dt
 
-        t = min(self.lc_timer / LANE_CHANGE_DURATION, 1)
+        duration = self.get_lane_change_duration()
+        t = min(self.lc_timer / duration, 1)
         pos_a = self.source_lane.start.lerp(self.source_lane.end, self.progress)
         pos_b = self.target_lane.start.lerp(self.target_lane.end, self.progress)
 
-        # smooth animation
+        # smoother animation
         t = t * t * (3 - 2 * t)
 
         self.position = pos_a.lerp(pos_b, t)
