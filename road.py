@@ -45,6 +45,8 @@ class Road:
         for lane in self.lanes:
             if not lane.cars or lane.cars[0].progress * (lane.end - lane.start).length() > MIN_SPAWN_GAP_M * PIXELS_PER_METER:
                 available_lanes.append(lane)
+        if len(available_lanes) == 0:
+            print("Gowno")
         return available_lanes
     
     def update_cars(self, dt):

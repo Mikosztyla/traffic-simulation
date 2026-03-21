@@ -78,7 +78,6 @@ class Lane:
                 car.progress = 0
                 car.current_lane.add_car(car)
                 car.direction = Direction.STRAIGHT
-
             self.delete_car(car)
 
     def get_next_lane(self, direction):

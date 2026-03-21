@@ -1,0 +1,5 @@
+experiment_id,lanes,inflow,left_prob,right_prob,traffic_lights,avg_time,runs
+0,2,1.0,0.2,0.3,True,198.63999999999965,10
+1,2,1.0,0.2,0.3,False,112.20999999999992,10
+2,4,2.0,0.1,0.5,False,109.68999999999997,10
+3,6,3.0,0.3,0.3,True,195.07999999999967,10

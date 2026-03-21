@@ -41,6 +41,8 @@ class TrafficLightsManager:
                 self.lights.append(light)
                 self.lights_by_road[road].append(light)
 
+        self.toggle_mode()
+
     def update(self, dt):
 
         if self.mode_auto:
@@ -62,7 +64,7 @@ class TrafficLightsManager:
 
             for light in self.lights_by_road[road]:
 
-                if i == self.current_phase:
+                if i % 2 == self.current_phase % 2:
                     if light.is_red():
                         light.start_red_to_green()
 
@@ -83,7 +85,6 @@ class TrafficLightsManager:
             light.draw(screen)
 
     def handle_click(self, mouse_pos):
-
         if self.mode_auto:
             return
 

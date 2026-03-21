@@ -78,18 +78,20 @@ class Crossing:
         in_lane.add_next_lane(connector, direction)
         self.connectors.append(connector)
 
-    def update(self, screen, dt):
+    def update(self, dt):
         for connector in self.connectors:
             connector.update_cars(dt, None, None)
-            connector.draw(screen)
 
-        for connector in self.connectors:
-            connector.draw_cars(screen)
-
-    def draw(self, screen):
+    def draw_crossing(self, screen):
         pygame.draw.rect(screen, (50, 50, 50), self.rect)
         # debug print
         # self.conflict_manager.draw_conflicts(screen)
+
+    def draw_crossing_cars(self, screen):
+        for connector in self.connectors:
+            connector.draw(screen)
+        for connector in self.connectors:
+            connector.draw_cars(screen)
 
     def draw_connectors(self, screen):
         color = (0, 200, 255)
