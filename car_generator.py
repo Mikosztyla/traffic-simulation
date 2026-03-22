@@ -68,8 +68,8 @@ class CarGenerator:
             Direction.STRAIGHT: car_img_straight,
             Direction.LEFT: car_img_left
         }
-        self.events = []
-        # self.events = read_input_file("test.csv")
+        # self.events = []
+        self.events = read_input_file("test.csv")
         self.event_index = 0
         self.time_to_next_event = self.events[0]["dt"] if self.events else None
 
@@ -93,7 +93,7 @@ class CarGenerator:
 
         if self.time_to_next_event <= 0:
             event = self.events[self.event_index]
-            self._try_spawn(event)
+            self._try_spawn(event, True)
 
             self.event_index += 1
             if self.event_index < len(self.events):
@@ -104,7 +104,7 @@ class CarGenerator:
         # Try to spawn queued cars
         self._process_waiting_queue()
 
-    def _try_spawn(self, event):
+    def _try_spawn(self, event, add_to_waiting: bool):
         side = event["side"]
         direction = event["direction"]
 
@@ -114,22 +114,24 @@ class CarGenerator:
                 lanes.extend(road.get_available_spawn_lanes())
 
         if not lanes:
-            self.waiting_queue.append(event)
+            if add_to_waiting:
+                self.waiting_queue.append(event)
             return False
 
         lane = random.choice(lanes)
-        # print(f"spawning car on side {side} with direction {direction}")
+        print(f"spawning car on side {side} with direction {direction}")
         self._spawn_car(lane, direction)
         return True
 
     def _process_waiting_queue(self):
-        still_waiting = []
+        new_queue = []
 
         for event in self.waiting_queue:
-            if not self._try_spawn(event):
-                still_waiting.append(event)
+            success = self._try_spawn(event, False)
+            if not success:
+                new_queue.append(event)
 
-        self.waiting_queue = still_waiting
+        self.waiting_queue = new_queue
 
     def _spawn_car(self, lane, direction):
         car = Car(
