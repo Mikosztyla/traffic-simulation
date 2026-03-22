@@ -119,7 +119,7 @@ class CarGenerator:
             return False
 
         lane = random.choice(lanes)
-        print(f"spawning car on side {side} with direction {direction}")
+        # print(f"spawning car on side {side} with direction {direction}")
         self._spawn_car(lane, direction)
         return True
 

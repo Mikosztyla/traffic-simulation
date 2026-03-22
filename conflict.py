@@ -30,12 +30,12 @@ class Conflict:
         else:
             disc = (v / a) ** 2 + 2 * dist_to_conflict / a
             if disc < 0:
-                return False  # stop before collision point
+                return None  # stop before collision point
             tc = - v / a + sqrt(disc)
 
         for other_car in self.lane.cars[::-1]:
             if other_car.direction is None:
-                return False # stop car is placed - red light
+                return None # stop car is placed - red light
             if other_car.direction in self.directions:
                 other_s = (other_car.speed * tc + 0.5 * other_car.acc * tc ** 2) * PIXELS_PER_METER
                 direction = (self.colision_point - other_car.position).normalize()
@@ -45,14 +45,13 @@ class Conflict:
                 time_other_to_colision = car_gap / max(car.speed, other_car.speed, 0.1)
 
                 if abs(car_gap) < SAFE_CONFLICT_GAP_METERS or \
-                    (time_other_to_colision < TIME_BEFORE_CONFLICT and \
-                    -TIME_AFTER_CONFLICT < time_other_to_colision):
-                    return True
+                    (TIME_BEFORE_CONFLICT > time_other_to_colision > -TIME_AFTER_CONFLICT):
+                    return other_car
                 
                 # if abs(car_gap) > SAFE_CONFLICT_GAP_METERS and time_other_to_colision > TIME_BEFORE_CONFLICT:
                 #     return False
                 
-        return False
+        return None
     
     def draw_collision_point(self, screen):
         pygame.draw.circle(screen, (255, 0, 0), (int(self.colision_point.x), int(self.colision_point.y)), 5)

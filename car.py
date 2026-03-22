@@ -57,8 +57,12 @@ class Car:
 
         self.stop_cars = {MOBIL_STOP_CAR: None,
                           CONFLICT_STOP_CAR: None}
+        self.conflict_car = None
+        self.omitting_conflict_cars = set()
 
     def update(self, following_car, right_lane, left_lane, dt):
+        if self.conflict_car and self.conflict_car.speed <= 0:
+            return
         lane_vector = self.current_lane.end - self.current_lane.start
         lane_length = lane_vector.length()       
 
@@ -159,10 +163,26 @@ class Car:
             return # too far from intersection to check conflicts
         
         for possible_conflict in self.current_lane.conflicts.get(self.direction, []):
-            if possible_conflict.is_conflict(self):
+            possible_conflict_car = possible_conflict.is_conflict(self)
+            if possible_conflict_car and possible_conflict_car not in self.omitting_conflict_cars:
                 self.stop_cars[CONFLICT_STOP_CAR] = self._get_stop_car(STOP_CONFLICT_DIST_M * PIXELS_PER_METER, lane_length)
+                self.conflict_car = possible_conflict_car
+                self.check_for_possible_release()
                 return
         self.stop_cars[CONFLICT_STOP_CAR] = None
+        self.conflict_car = None
+
+    def unlock_car_from_conflict(self, car):
+        self.omitting_conflict_cars.add(car)
+        self.conflict_car = None
+
+    def check_for_possible_release(self):
+        next_conflict_car = self.conflict_car
+        while next_conflict_car.conflict_car:
+            if next_conflict_car.conflict_car == self:
+                next_conflict_car.unlock_car_from_conflict(self)
+                return
+            next_conflict_car = next_conflict_car.conflict_car
 
     def calculate_acc(self, speed, following_car_speed, gap):
         return self.idm.get_acc(speed, following_car_speed, gap)
