@@ -18,8 +18,6 @@ def run_simulation(config: SimulationConfig, headless=True):
     if config:
         LANES_PER_SIDE = config.lanes_per_side
         INFLOW = config.inflow
-        LEFT_PROBABILITY = config.left_prob
-        RIGHT_PROBABILITY = config.right_prob
     pygame.init()
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -112,10 +110,40 @@ def run_simulation(config: SimulationConfig, headless=True):
 
 
 experiments = [
-    SimulationConfig(lanes_per_side=2, inflow=1.0, left_prob=0.2, right_prob=0.3, traffic_lights=True),
-    SimulationConfig(lanes_per_side=2, inflow=1.0, left_prob=0.2, right_prob=0.3, traffic_lights=False),
-    SimulationConfig(lanes_per_side=4, inflow=2.0, left_prob=0.1, right_prob=0.5, traffic_lights=False),
-    SimulationConfig(lanes_per_side=6, inflow=3.0, left_prob=0.3, right_prob=0.3, traffic_lights=True),
+    # wszystkie liczby linii ze światłami
+    SimulationConfig(lanes_per_side=1, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=8.0, traffic_lights=True),
+    # wszystkie liczby linii bez świateł
+    SimulationConfig(lanes_per_side=1, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=8.0, traffic_lights=False),
 ]
 
 if RUN_HEADLESS:
