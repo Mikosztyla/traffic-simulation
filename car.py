@@ -291,13 +291,18 @@ class Car:
     def consider_lane_change(self, target_lane, to_right, mobil_model):
         lead_car, lag_car = self._get_neighbour_cars(target_lane)
 
+        if self.get_gap(lead_car) < SAFE_GAP:
+            return False
         new_acc = self.calculate_acc(self.speed, lead_car.speed if lead_car else self.speed, self.get_gap(lead_car))
 
         new_lag_acc = 0
+        curr_lag_acc = 0
         if lag_car:
+            curr_lag_acc = lag_car.acc
             new_lag_acc = lag_car.calculate_acc(lag_car.speed, self.speed, lag_car.get_gap(self))
+            
 
-        return mobil_model.consider_line_change(self.acc, new_acc, new_lag_acc, to_right)
+        return mobil_model.consider_line_change(self.acc, new_acc, curr_lag_acc, new_lag_acc, to_right)
     
     def do_lane_change(self, target_lane):
         target_lane.add_car(self)
