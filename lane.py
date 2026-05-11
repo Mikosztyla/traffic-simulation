@@ -2,19 +2,50 @@ import pygame
 from constants import *
 from car import Car
 from stop_car import StopCar
+from direction import Direction
+
+
+def draw_dashed_line(screen, color, start, end, dash_length=20, gap_length=10, width=3):
+    direction = end - start
+    length = direction.length()
+
+    if length == 0:
+        return
+
+    direction = direction.normalize()
+    step = dash_length + gap_length
+
+    for i in range(0, int(length), step):
+        dash_start = start + direction * i
+        dash_end = start + direction * min(i + dash_length, length)
+        pygame.draw.line(screen, color, dash_start, dash_end, width)
 
 
 class Lane:
-    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit, lane_width=LANE_WIDTH):
+    def __init__(self, start: pygame.Vector2, end: pygame.Vector2, road, speed_limit):
         self.start = start
         self.end = end
-        self.lane_width = lane_width
+        self.lane_width = LANE_WIDTH
         self.speed_limit = speed_limit
         self.road = road
-        # TODO na razie robię byle jak na liście, na pewno da się lepiej (może heap?)
         # car[0] ----road----> car[n]
         self.stop_car = None
         self.cars = []
+        self.should_draw_lane = True
+
+        self.next_lanes = {}
+        self.conflicts = {Direction.LEFT: [],
+                          Direction.RIGHT: [],
+                          Direction.STRAIGHT: []}
+
+    def add_next_lane(self, lane, direction):
+        self.next_lanes[direction] = lane
+
+    def add_conflict(self, conflict, direction):
+        self.conflicts[direction].append(conflict)
+
+    def make_lane_invisible(self):
+        self.should_draw_lane = False
 
     def add_car(self, new_car: Car):
         insert_index = 0
@@ -26,11 +57,6 @@ class Lane:
             insert_index = len(self.cars)
 
         self.cars.insert(insert_index, new_car)
-
-    def spawn_car(self, max_acc, max_speed_car):
-        car = Car(self, max_speed_car)
-        self.cars.insert(0, car)
-        return car
 
     def delete_car(self, car: Car):
         self.cars.remove(car)
@@ -46,10 +72,18 @@ class Lane:
             if finished: cars_finished.append(car)
 
         for car in cars_finished:
-            self.cars.remove(car)
+            if car.progress >= 1 and car.direction in self.next_lanes:
+                new_lane = self.get_next_lane(car.direction)
+                car.current_lane = new_lane
+                car.progress = 0
+                car.current_lane.add_car(car)
+                car.direction = Direction.STRAIGHT
+            self.delete_car(car)
+
+    def get_next_lane(self, direction):
+        return self.next_lanes.get(direction)
 
     def set_red_light(self, point):
-
         if self.stop_car is not None:
             return
 
@@ -59,7 +93,6 @@ class Lane:
         self.add_car(stop_car)
 
     def set_green_light(self):
-
         if self.stop_car is None:
             return
 
@@ -83,6 +116,16 @@ class Lane:
             progress = 1
 
         return max(0, progress)
+    
+    def get_number_of_neighbour_lanes_in_direction(self, direction):
+        if direction == Direction.LEFT:
+            return len(self.road.lanes) - self.road.lanes.index(self) - 1
+        elif direction == Direction.RIGHT:
+            return self.road.lanes.index(self)
+    
+    def draw_cars(self, screen):
+        for car in self.cars:
+            car.draw(screen)
 
     def draw(self, screen):
         direction = (self.end - self.start)
@@ -91,26 +134,42 @@ class Lane:
         if length == 0:
             return
 
-        direction = direction.normalize()
-        normal = pygame.Vector2(-direction.y, direction.x)
+        if self.should_draw_lane:
+            direction = direction.normalize()
+            normal = pygame.Vector2(-direction.y, direction.x)
 
-        half_width = self.lane_width / 2
-        edge_thickness = 3
+            half_width = self.lane_width / 2
+            edge_thickness = 3
 
-        # --- Road surface polygon ---
-        p1 = self.start + normal * half_width
-        p2 = self.start - normal * half_width
-        p3 = self.end - normal * half_width
-        p4 = self.end + normal * half_width
+            # road surface
+            p1 = self.start + normal * half_width
+            p2 = self.start - normal * half_width
+            p3 = self.end - normal * half_width
+            p4 = self.end + normal * half_width
 
-        pygame.draw.polygon(screen, (50, 50, 50), [p1, p2, p3, p4])
+            pygame.draw.polygon(screen, (50, 50, 50), [p1, p2, p3, p4])
 
-        # --- Left white edge ---
-        left1 = self.start + normal * half_width
-        left2 = self.end + normal * half_width
-        pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
+            # left white edge
+            left1 = self.start + normal * half_width
+            left2 = self.end + normal * half_width
 
-        # --- Right white edge ---
-        right1 = self.start - normal * half_width
-        right2 = self.end - normal * half_width
-        pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+            # right white edge
+            right1 = self.start - normal * half_width
+            right2 = self.end - normal * half_width
+            lane_index = self.road.lanes.index(self)
+            lane_count = len(self.road.lanes)
+
+            is_left_edge = lane_index == 0
+            is_right_edge = lane_index == lane_count - 1
+
+            if is_left_edge:
+                pygame.draw.line(screen, (255, 255, 255), left1, left2, edge_thickness)
+                pass
+            else:
+                draw_dashed_line(screen, (255, 255, 255), left1, left2, width=edge_thickness)
+
+            if is_right_edge:
+                pygame.draw.line(screen, (255, 255, 255), right1, right2, edge_thickness)
+                pass
+            else:
+                draw_dashed_line(screen, (255, 255, 255), right1, right2, width=edge_thickness)

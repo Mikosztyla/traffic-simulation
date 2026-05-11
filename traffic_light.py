@@ -72,11 +72,23 @@ class TrafficLight:
             if self.timer >= TRAFFIC_YELLOW_TIME:
                 self.turn_on_red()
 
+    def is_green(self):
+        return self.state == "green"
+
+    def is_red(self):
+        return self.state == "red"
+
     def handle_click(self, mouse_pos):
         if self.sequence is not None:
             return
 
         if not self.rect.collidepoint(mouse_pos):
+            return
+
+        local_x = mouse_pos[0] - self.rect.x
+        local_y = mouse_pos[1] - self.rect.y
+
+        if self.mask.get_at((local_x, local_y)) == 0:
             return
 
         if self.state == "red":
@@ -86,4 +98,10 @@ class TrafficLight:
 
     def draw(self, screen):
         image = self.images[self.state]
-        screen.blit(image, self.position)
+
+        self.rotated_image = pygame.transform.rotate(image, self.angle)
+        self.rect = self.rotated_image.get_rect(center=self.position)
+
+        screen.blit(self.rotated_image, self.rect)
+
+        self.mask = pygame.mask.from_surface(self.rotated_image)

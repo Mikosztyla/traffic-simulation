@@ -2,134 +2,189 @@ import pygame
 import sys
 from side import Side
 from crossing import Crossing
-from car import Car
-
-pygame.init()
-
-WIDTH, HEIGHT = 1200, 800
-SPEED = 300
-LANES_PER_SIDE = 1
-
-
-def connect_crossings(c1, c2, c1_to_c2_side):
-
-    OPPOSITE = {
-        Side.N: Side.S,
-        Side.S: Side.N,
-        Side.E: Side.W,
-        Side.W: Side.E
-    }
-
-    side1 = c1_to_c2_side
-    side2 = OPPOSITE[side1]
-
-    c1_out = c1.sides[side1]["out"]
-    c2_in = c2.sides[side2]["in"]
-    c2_out = c2.sides[side2]["out"]
-    c1_in = c1.sides[side1]["in"]
-
-    lane_count = min(len(c1_out), len(c2_in))
-
-    # ==============================
-    # Connect c1 → c2
-    # ==============================
-    for i in range(lane_count):
-
-        lane = c1_out[LANES_PER_SIDE - i - 1]
-
-        lane.start = c1_out[LANES_PER_SIDE - i - 1].start
-        lane.end = c2_in[i].end
-        c2.sides[side2]["in"][i] = lane
-
-    # ==============================
-    # Connect c2 → c1
-    # ==============================
-    lane_count = min(len(c2_out), len(c1_in))
-
-    for i in range(lane_count):
-
-        lane = c2_out[LANES_PER_SIDE - i - 1]
-
-        lane.start = c2_out[LANES_PER_SIDE - i - 1].start
-        lane.end = c1_in[i].end
-        c1.sides[side1]["in"][i] = lane
+from road import Road
+from constants import *
+from car_generator import CarGenerator
+from trafficLightsManager import TrafficLightsManager
+from directionLegend import DirectionLegend
+from stats import StatsPanel
+from simulationConfig import SimulationConfig
+import random
+import csv
 
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Traffic simulation")
+def run_simulation(config: SimulationConfig, headless=True):
+    global LANES_PER_SIDE, INFLOW, LEFT_PROBABILITY, RIGHT_PROBABILITY
+    if config:
+        LANES_PER_SIDE = config.lanes_per_side
+        INFLOW = config.inflow
+    pygame.init()
 
-clock = pygame.time.Clock()
-clock.tick(60)
-running = True
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    clock = pygame.time.Clock()
 
-car_image = pygame.image.load("media/zygzak.png").convert_alpha()
-car_image = pygame.transform.scale(car_image, (40, 55))
+    center = pygame.Vector2(WIDTH // 2, HEIGHT // 2)
+    offset = LANE_WIDTH * LANES_PER_SIDE
+    offset_road = offset / 2
 
-car_pos = pygame.Vector2(WIDTH // 2 - 20, HEIGHT)
-car_speed = 100
+    north_road_in = Road(pygame.Vector2(center.x + offset_road, center.y + ROAD_LENGTH), pygame.Vector2(center.x + offset_road, center.y + offset), Side.N)
+    north_road_out = Road(pygame.Vector2(center.x + offset_road, center.y - offset), pygame.Vector2(center.x + offset_road, center.y - ROAD_LENGTH), Side.N)
 
-car_rect = car_image.get_rect(topleft=car_pos)
+    south_road_in = Road(pygame.Vector2(center.x - offset_road, center.y - ROAD_LENGTH), pygame.Vector2(center.x - offset_road, center.y - offset), Side.S)
+    south_road_out = Road(pygame.Vector2(center.x - offset_road, center.y + offset), pygame.Vector2(center.x - offset_road, center.y + ROAD_LENGTH), Side.S)
 
-crossing1 = Crossing(
-    center=pygame.Vector2(WIDTH // 2 - 200, HEIGHT // 2),
-    lanes_per_side=LANES_PER_SIDE
-)
+    west_road_in = Road(pygame.Vector2(center.x + ROAD_LENGTH, center.y - offset_road), pygame.Vector2(center.x + offset, center.y - offset_road), Side.W)
+    west_road_out = Road(pygame.Vector2(center.x - offset, center.y - offset_road), pygame.Vector2(center.x - ROAD_LENGTH, center.y - offset_road), Side.W)
 
-crossing2 = Crossing(
-    center=pygame.Vector2(WIDTH // 2 + 200, HEIGHT // 2),
-    lanes_per_side=LANES_PER_SIDE
-)
-connect_crossings(crossing1, crossing2, Side.E)
-cars = []
-spawn_timer = 0
-spawn_interval = 1
-lane = crossing1.get_random_incoming_lane()
-cars.append(Car(lane, speed=120))
+    east_road_in = Road(pygame.Vector2(center.x - ROAD_LENGTH, center.y + offset_road), pygame.Vector2(center.x - offset, center.y + offset_road), Side.E)
+    east_road_out = Road(pygame.Vector2(center.x + offset, center.y + offset_road), pygame.Vector2(center.x + ROAD_LENGTH, center.y + offset_road), Side.E)
 
-traffic_light_image = pygame.image.load("media/traffic.png").convert_alpha()
-traffic_light_image = pygame.transform.scale(traffic_light_image, (20, 45))
-traffic_light_images = {
-    Side.N: pygame.transform.rotate(traffic_light_image, 180),
-    Side.S: traffic_light_image,
-    Side.E: pygame.transform.rotate(traffic_light_image, 90),
-    Side.W: pygame.transform.rotate(traffic_light_image, -90),
-}
+    roads_in = [north_road_in, east_road_in, south_road_in, west_road_in]
+    roads_out = [north_road_out, south_road_out, west_road_out, east_road_out]
+    all_roads = roads_in + roads_out
+
+    crossing = Crossing(north_road_in, north_road_out, east_road_in, east_road_out,
+                        south_road_in, south_road_out, west_road_in, west_road_out)
+
+    car_generator = CarGenerator(roads_in, INFLOW)
+    if config and not config.traffic_lights:
+        traffic_lights_manager = None
+    else:
+        traffic_lights_manager = TrafficLightsManager(roads_in)
+    stats_panel = StatsPanel(all_roads, crossing)
+    legend = DirectionLegend(car_generator.car_images)
+
+    running = True
+
+    while running:
+        dt = clock.tick(60) / 1000 * SIMULATION_SPEED
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return None
+            if not headless:
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return None
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    traffic_lights_manager.handle_click(event.pos)
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_a:
+                        traffic_lights_manager.toggle_mode()
+
+        if traffic_lights_manager:
+            traffic_lights_manager.update(dt)
+        car_generator.update(dt)
+
+        for road in all_roads:
+            road.update_cars(dt)
+
+        crossing.update(dt)
+        stats_panel.update(dt)
+
+        if not headless:
+            screen.fill((0, 160, 0))
+
+            crossing.draw_crossing(screen)
+            for road in all_roads:
+                road.draw(screen)
+            crossing.draw_crossing_cars(screen)
+
+            traffic_lights_manager.draw(screen)
+            stats = {
+                "Time": f"{stats_panel.simulation_time:.1f}s",
+                "Spawned cars": car_generator.total_spawned,
+                 "Current cars": len(stats_panel.get_current_cars()),
+                 "Avg speed": f"{stats_panel.get_avg_speed():.2f}",
+                 "Flow (cars/s)": f"{stats_panel.get_flow_rate():.2f}"}
+            stats_panel.draw(screen, stats)
+            legend.draw(screen)
+
+            pygame.display.flip()
+
+        if len(stats_panel.get_current_cars()) == 0 and car_generator.total_spawned > 10:
+            result = stats_panel.simulation_time
+            pygame.quit()
+            return result
 
 
-def fill_background(screen):
-    screen.fill((0, 160, 0))
+experiments = [
+    # wszystkie liczby linii ze światłami
+    SimulationConfig(lanes_per_side=1, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=1, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=2, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=3, inflow=8.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=1.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=2.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=4.0, traffic_lights=True),
+    SimulationConfig(lanes_per_side=4, inflow=8.0, traffic_lights=True),
+    # wszystkie liczby linii bez świateł
+    SimulationConfig(lanes_per_side=1, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=1, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=2, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=3, inflow=8.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=1.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=2.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=4.0, traffic_lights=False),
+    SimulationConfig(lanes_per_side=4, inflow=8.0, traffic_lights=False),
+]
 
+if RUN_HEADLESS:
+    all_results = []
 
-while running:
-    dt = clock.tick(60) / 1000
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    fill_background(screen)
-    crossing1.draw(screen)
-    crossing2.draw(screen)
+    for exp_id, config in enumerate(experiments):
+        print(f"\nRunning experiment {exp_id}")
 
-    car_pos.y -= car_speed * dt
-    car_rect.topleft = car_pos
-    spawn_timer += dt
-    crossing1.draw_in_traffic_lights(screen, traffic_light_images)
-    crossing2.draw_in_traffic_lights(screen, traffic_light_images)
-    # crossing2.draw_connectors(screen)
-    if spawn_timer >= spawn_interval:
-        lane = crossing1.get_random_incoming_lane()
-        cars.append(Car(lane, speed=120))
-        spawn_timer = 0
-    for car in cars:
-        finished = car.update(dt)
+        run_results = []
 
-        if finished:
-            new_lane = crossing2.get_random_outgoing_lane(car.current_lane.side)
-            car.current_lane = new_lane
-            car.progress = 0
+        for i in range(config.num_runs):
+            random.seed(i)
+            t = run_simulation(config, headless=True)
 
-    for car in cars:
-        car.draw(screen, car_image)
-    pygame.display.flip()
+            if t is not None:
+                run_results.append(t)
+
+        avg = sum(run_results) / len(run_results)
+
+        all_results.append({
+            "experiment_id": exp_id,
+            "lanes": config.lanes_per_side,
+            "inflow": config.inflow,
+            "left_prob": config.left_prob,
+            "right_prob": config.right_prob,
+            "traffic_lights": config.traffic_lights,
+            "avg_time": avg,
+            "runs": len(run_results)
+        })
+
+    with open("results.csv", "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=all_results[0].keys())
+        writer.writeheader()
+        writer.writerows(all_results)
+
+else:
+    run_simulation(None, headless=False)
 
 pygame.quit()
 sys.exit()
+
+
+
+
